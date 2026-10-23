@@ -14,6 +14,12 @@
   </head>
   <body>
     <header class="app-header">
+      <a class="brand" href="/" data-nav="home">Lattente</a>
+      <nav class="header-nav" aria-label="Principal">
+        <a href="/menu" data-nav="menu">Menú</a>
+        <a href="/orders" data-nav="orders">Pedido</a>
+        <a href="/feedback" data-nav="feedback">Feedback</a>
+      </nav>
       <form class="hero-search" data-search role="search">
         <label class="hero-search__field">
           <span class="hero-search__icon" aria-hidden="true">
@@ -37,14 +43,7 @@
           </button>
         </label>
       </form>
-      <a class="brand" href="/">Lattente</a>
       <div class="header-actions">
-        <nav class="header-nav" aria-label="Principal">
-          <a href="/" data-nav="home">Portada</a>
-          <a href="/menu" data-nav="menu">Menú</a>
-          <a href="/orders" data-nav="orders">Pedido</a>
-          <a href="/feedback" data-nav="feedback">Feedback</a>
-        </nav>
         <button class="cart-btn" type="button" data-open-cart aria-label="Carrito">
           🛒
           <span class="cart-count" data-cart-count hidden>0</span>
@@ -58,7 +57,6 @@
           <h2>Menú</h2>
           <p class="menu-lead">Elige una categoría para ver sus productos y agregarlos al pedido.</p>
         </div>
-        <a class="menu-home-link" href="/">← Volver a la portada</a>
       </div>
 
       <div data-menu-browse>

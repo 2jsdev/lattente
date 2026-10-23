@@ -56,8 +56,9 @@ se configuran en *Settings → Secrets and variables → Actions*.
 | `/feedback` | Calificación del servicio |
 | `/admin` | CMS (productos, categorías, pedidos, feedback) |
 
-En todas las páginas hay un link **Portada** en la barra de navegación para volver
-al inicio.
+En todas las páginas la cabecera es la misma: logo **Lattente** (enlaza a la
+portada), navegación *Menú / Pedido / Feedback* y el carrito. El buscador solo
+aparece en la portada y en el menú.
 
 ## Admin / CMS
 

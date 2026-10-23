@@ -13,12 +13,20 @@
     <link rel="stylesheet" href="/css/styles.css" />
   </head>
   <body class="feedback-page">
-    <nav class="site-topnav" aria-label="Principal">
-      <a href="/" data-nav="home" class="site-topnav__home">Portada</a>
-      <a href="/menu" data-nav="menu">Menú</a>
-      <a href="/orders" data-nav="orders">Pedido</a>
-      <a href="/feedback" data-nav="feedback">Feedback</a>
-    </nav>
+    <header class="app-header">
+      <a class="brand" href="/" data-nav="home">Lattente</a>
+      <nav class="header-nav" aria-label="Principal">
+        <a href="/menu" data-nav="menu">Menú</a>
+        <a href="/orders" data-nav="orders">Pedido</a>
+        <a href="/feedback" data-nav="feedback">Feedback</a>
+      </nav>
+      <div class="header-actions">
+        <button class="cart-btn" type="button" data-open-cart aria-label="Carrito">
+          🛒
+          <span class="cart-count" data-cart-count hidden>0</span>
+        </button>
+      </div>
+    </header>
 
     <main class="feedback-grid">
       <section class="feedback-copy">
@@ -114,6 +122,26 @@
         <a class="email-link" href="mailto:hola@lattente.bo">Email ↗</a>
       </section>
     </main>
+
+    <div class="cart-drawer" data-cart-drawer>
+      <div class="cart-backdrop"></div>
+      <aside class="cart-panel" aria-label="Carrito">
+        <div>
+          <h2>Tu pedido</h2>
+          <button type="button" data-close-cart class="btn" style="width:auto;margin-top:0.5rem;padding:0.4rem 0.9rem">
+            Cerrar
+          </button>
+        </div>
+        <div class="cart-list" data-cart-list></div>
+        <div>
+          <div class="cart-total">
+            <span>Total</span>
+            <span data-cart-total>0,00 Bs.</span>
+          </div>
+          <a class="btn" href="/orders">Ir a Pedido</a>
+        </div>
+      </aside>
+    </div>
 
     <script src="/js/cart.js"></script>
     <script src="/js/app.js"></script>

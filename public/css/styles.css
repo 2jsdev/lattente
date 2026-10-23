@@ -77,54 +77,10 @@ button:active,
   transform: scale(0.97);
 }
 
-/* ——— Site topnav (inner pages) ——— */
-.site-topnav {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 1.75rem;
-  padding: 0.95rem 2rem;
-  background: var(--cream);
-  position: sticky;
-  top: 0;
-  z-index: 40;
-}
-
-.site-topnav a {
-  font-size: 0.95rem;
-  color: var(--chocolate-soft);
-  transition: color 160ms ease, opacity 160ms ease;
-}
-
-.site-topnav a:hover,
-.site-topnav a.is-active {
-  color: var(--chocolate);
-}
-
-.site-topnav a.is-active {
-  font-weight: 600;
-}
-
-.site-topnav__home {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.35rem 0.8rem;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  color: var(--chocolate);
-  font-weight: 600;
-}
-
-.site-topnav__home:hover {
-  background: rgba(63, 42, 34, 0.06);
-  color: var(--chocolate);
-}
-
-/* ——— Dark app header (Home) ——— */
+/* ——— Dark app header (shared by every page) ——— */
 .app-header {
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 1rem;
   padding: 0.85rem 1.5rem;
@@ -137,6 +93,11 @@ button:active,
   z-index: 50;
 }
 
+/* Pages with the search box need a fourth column. */
+.app-header:has(.hero-search) {
+  grid-template-columns: auto auto 1fr auto;
+}
+
 .app-header .brand {
   font-family: var(--serif);
   font-size: clamp(1.35rem, 2.2vw, 1.85rem);
@@ -144,11 +105,26 @@ button:active,
   text-align: center;
   text-transform: uppercase;
   line-height: 1;
+  justify-self: start;
+  color: var(--cream);
+  transition: opacity 160ms ease;
+}
+
+.app-header .brand:hover {
+  opacity: 0.82;
+}
+
+.app-header .brand.is-active {
+  color: var(--cream);
+}
+
+.header-nav {
+  justify-self: start;
 }
 
 .hero-search {
   width: min(100%, 280px);
-  justify-self: start;
+  justify-self: end;
 }
 
 .hero-search__field {
@@ -259,6 +235,7 @@ button:active,
   align-items: center;
   gap: 0.85rem 1.1rem;
   flex-wrap: wrap;
+  justify-self: end;
 }
 
 .header-nav {
@@ -281,22 +258,6 @@ button:active,
 
 .header-nav a.is-active {
   font-weight: 600;
-}
-
-.header-nav a[data-nav="home"] {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.3rem 0.75rem;
-  border: 1px solid rgba(253, 248, 232, 0.3);
-  border-radius: 999px;
-  color: var(--cream);
-  font-weight: 600;
-}
-
-.header-nav a[data-nav="home"]:hover {
-  background: rgba(253, 248, 232, 0.12);
-  color: var(--cream);
 }
 
 .cart-count {
@@ -513,20 +474,6 @@ body.home-page .hero-content {
   gap: 1rem;
   margin-bottom: 1.15rem;
   flex-wrap: wrap;
-}
-
-.menu-home-link {
-  flex: 0 0 auto;
-  font-size: 0.88rem;
-  color: var(--chocolate-soft);
-  border-bottom: 1px solid var(--line);
-  padding-bottom: 0.15rem;
-  transition: color 160ms ease, border-color 160ms ease;
-}
-
-.menu-home-link:hover {
-  color: var(--chocolate);
-  border-color: var(--chocolate);
 }
 
 .menu-toolbar h2 {
@@ -1791,7 +1738,7 @@ body.feedback-page {
   overflow: hidden;
 }
 
-body.feedback-page .site-topnav {
+body.feedback-page .app-header {
   flex-shrink: 0;
 }
 
@@ -2476,15 +2423,22 @@ body.feedback-page .feedback-grid {
     width: 100%;
   }
 
-  .app-header {
+  .app-header,
+  .app-header:has(.hero-search) {
     grid-template-columns: 1fr;
     justify-items: center;
     gap: 0.85rem;
   }
 
+  .app-header .brand {
+    justify-self: center;
+    order: -2;
+  }
+
   .hero-search {
     width: min(100%, 360px);
     justify-self: center;
+    order: -1;
   }
 
   .header-actions {
@@ -2534,13 +2488,6 @@ body.feedback-page .feedback-grid {
 }
 
 @media (max-width: 640px) {
-  .site-topnav {
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 0.85rem 1.1rem;
-    padding: 0.8rem 1rem;
-  }
-
   .section,
   .menu-shell,
   .menu-band {
