@@ -119,6 +119,7 @@
     const box = document.querySelector("[data-order-products]");
     const countEl = document.querySelector("[data-order-count]");
     const totalEl = document.querySelector("[data-order-total]");
+    const submitButton = document.querySelector('[data-order-form] [type="submit"]');
     if (!box || rendering) return;
 
     rendering = true;
@@ -126,10 +127,11 @@
     syncQuantityField(cart);
 
     const count = cartCount(cart);
+    if (submitButton) submitButton.disabled = count === 0;
     if (countEl) {
       countEl.textContent =
         count === 0
-          ? "Vacío"
+          ? "0 productos"
           : count === 1
             ? "1 producto"
             : `${count} productos`;
@@ -138,10 +140,13 @@
 
     if (!cart.length) {
       box.innerHTML = `
-        <p class="order-empty">
-          Tu carrito está vacío. Elegí productos a la izquierda o desde el
-          <a href="/#menu">Menú</a>.
-        </p>`;
+        <div class="order-empty">
+          <span class="order-empty__icon" aria-hidden="true">＋</span>
+          <div>
+            <strong>Tu pedido empieza aquí</strong>
+            <p>Agregá productos del catálogo y los vas a ver en este resumen.</p>
+          </div>
+        </div>`;
     } else {
       box.innerHTML = cart
         .map((item) => {

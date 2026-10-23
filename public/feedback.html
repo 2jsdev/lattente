@@ -40,10 +40,14 @@
 
       <section class="feedback-form-wrap">
         <form class="panel feedback-panel" data-feedback-form>
-          <h2>Tu calificación</h2>
+          <header class="feedback-panel__header">
+            <p class="feedback-panel__eyebrow">Tu opinión nos ayuda</p>
+            <h2>Deja tu calificación</h2>
+            <p>Contanos cómo fue tu experiencia en Lattente.</p>
+          </header>
 
           <div class="field">
-            <label for="email">Correo</label>
+            <label for="email">Correo electrónico</label>
             <input
               id="email"
               name="email"
@@ -58,30 +62,30 @@
           <div class="field">
             <label id="rating-label">¿Cómo estuvo el servicio?</label>
             <div class="feedback-faces" role="radiogroup" aria-labelledby="rating-label">
-              <label title="Muy mal">
+              <label title="Muy mal" aria-label="Muy mal">
                 <input type="radio" name="rating" value="1" required />
-                <span aria-hidden="true">😠</span>
-                <span class="visually-hidden">Muy mal</span>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="m8.5 9 1 1m6-1-1 1M8 17c1-2 2.3-3 4-3s3 .8 4 3" /><path d="m7 6 2 1m8-1-2 1" /></svg>
+                <span class="feedback-face__text">Muy mal</span>
               </label>
-              <label title="Mal">
+              <label title="Mal" aria-label="Mal">
                 <input type="radio" name="rating" value="2" />
-                <span aria-hidden="true">🙁</span>
-                <span class="visually-hidden">Mal</span>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="m8.5 9 1 1m6-1-1 1M8 17c1-2 2.3-3 4-3s3 .8 4 3" /></svg>
+                <span class="feedback-face__text">Mal</span>
               </label>
-              <label title="Neutral">
+              <label title="Neutral" aria-label="Neutral">
                 <input type="radio" name="rating" value="3" />
-                <span aria-hidden="true">😐</span>
-                <span class="visually-hidden">Neutral</span>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="m8.5 9 1 1m6-1-1 1M8 16h8" /></svg>
+                <span class="feedback-face__text">Neutral</span>
               </label>
-              <label title="Bien">
+              <label title="Bien" aria-label="Bien">
                 <input type="radio" name="rating" value="4" />
-                <span aria-hidden="true">🙂</span>
-                <span class="visually-hidden">Bien</span>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="m8.5 9 1 1m6-1-1 1M8 14c1 2 2.3 3 4 3s3-.8 4-3" /></svg>
+                <span class="feedback-face__text">Bien</span>
               </label>
-              <label title="Excelente">
+              <label title="Excelente" aria-label="Excelente">
                 <input type="radio" name="rating" value="5" />
-                <span aria-hidden="true">😄</span>
-                <span class="visually-hidden">Excelente</span>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="m8.5 9 1 1m6-1-1 1M7.5 13.5c1 2.3 2.5 3.5 4.5 3.5s3.5-1.2 4.5-3.5" /></svg>
+                <span class="feedback-face__text">Excelente</span>
               </label>
             </div>
           </div>
@@ -91,13 +95,14 @@
             <textarea
               id="comment"
               name="comment"
-              rows="2"
-              placeholder="Contanos tu experiencia…"
+              rows="4"
+              maxlength="1200"
+              placeholder="¿Qué salió bien o qué podríamos mejorar?"
             ></textarea>
           </div>
 
-          <button class="btn" type="submit">Enviar</button>
-          <p class="panel-note">No envíes contraseñas ni datos sensibles.</p>
+          <button class="btn" type="submit">Enviar calificación</button>
+          <p class="panel-note">Tu correo solo se usa para dar seguimiento a tu comentario.</p>
         </form>
       </section>
 
@@ -105,11 +110,13 @@
 
     <div class="cart-drawer" data-cart-drawer>
       <div class="cart-backdrop"></div>
-      <aside class="cart-panel" aria-label="Carrito">
-        <div>
-          <h2>Tu pedido</h2>
-          <button type="button" data-close-cart class="btn" style="width:auto;margin-top:0.5rem;padding:0.4rem 0.9rem">
-            Cerrar
+      <aside class="cart-panel" role="dialog" aria-modal="true" aria-labelledby="cart-title">
+        <div class="cart-panel__head">
+          <h2 id="cart-title">Tu pedido</h2>
+          <button type="button" data-close-cart class="cart-close" aria-label="Cerrar carrito">
+            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+              <path d="m6 6 12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+            </svg>
           </button>
         </div>
         <div class="cart-list" data-cart-list></div>

@@ -16,6 +16,7 @@ const {
   categoryBody,
   categoryUpdateBody,
   orderStatusBody,
+  socialLinksBody,
   idParam,
 } = require("../validation/admin");
 const authController = require("../controllers/admin/authController");
@@ -23,6 +24,7 @@ const productsController = require("../controllers/admin/productsController");
 const categoriesController = require("../controllers/admin/categoriesController");
 const ordersController = require("../controllers/admin/ordersController");
 const feedbackController = require("../controllers/admin/feedbackController");
+const siteSettingsController = require("../controllers/admin/siteSettingsController");
 
 const router = express.Router();
 
@@ -87,6 +89,13 @@ router.patch(
 );
 
 router.get("/feedback", asyncHandler(feedbackController.list));
+
+router.get("/site-settings/social-links", asyncHandler(siteSettingsController.getSocialLinks));
+router.put(
+  "/site-settings/social-links",
+  validate({ body: socialLinksBody }),
+  asyncHandler(siteSettingsController.saveSocialLinks)
+);
 
 router.use(errorHandler);
 

@@ -46,6 +46,26 @@ const orderStatusBody = z.object({
   status: z.enum(["pending", "confirmed", "done", "cancelled"]),
 });
 
+const socialUrl = z
+  .string()
+  .trim()
+  .max(2048, "El enlace es demasiado largo")
+  .refine((value) => {
+    if (!value) return true;
+    try {
+      const url = new URL(value);
+      return ["http:", "https:"].includes(url.protocol) && url.hostname.includes(".");
+    } catch {
+      return false;
+    }
+  }, "Ingresá un enlace completo que empiece con https://");
+
+const socialLinksBody = z.object({
+  instagram: socialUrl,
+  facebook: socialUrl,
+  tiktok: socialUrl,
+});
+
 module.exports = {
   loginBody,
   productBody,
@@ -53,5 +73,6 @@ module.exports = {
   categoryBody,
   categoryUpdateBody,
   orderStatusBody,
+  socialLinksBody,
   idParam,
 };

@@ -13,10 +13,12 @@ const categoriesController = require("../controllers/public/categoriesController
 const productsController = require("../controllers/public/productsController");
 const ordersController = require("../controllers/public/ordersController");
 const feedbackController = require("../controllers/public/feedbackController");
+const siteSettingsController = require("../controllers/public/siteSettingsController");
 
 const router = express.Router();
 
 router.get("/health", asyncHandler(healthController.check));
+router.get("/site-settings/social-links", asyncHandler(siteSettingsController.getSocialLinks));
 
 router.get(
   "/categories",

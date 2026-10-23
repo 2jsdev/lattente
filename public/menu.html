@@ -84,11 +84,13 @@
 
     <div class="cart-drawer" data-cart-drawer>
       <div class="cart-backdrop"></div>
-      <aside class="cart-panel" aria-label="Carrito">
-        <div>
-          <h2>Tu pedido</h2>
-          <button type="button" data-close-cart class="btn" style="width:auto;margin-top:0.5rem;padding:0.4rem 0.9rem">
-            Cerrar
+      <aside class="cart-panel" role="dialog" aria-modal="true" aria-labelledby="cart-title">
+        <div class="cart-panel__head">
+          <h2 id="cart-title">Tu pedido</h2>
+          <button type="button" data-close-cart class="cart-close" aria-label="Cerrar carrito">
+            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+              <path d="m6 6 12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+            </svg>
           </button>
         </div>
         <div class="cart-list" data-cart-list></div>

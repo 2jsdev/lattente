@@ -11,7 +11,6 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="/css/admin.css" />
-    <link rel="stylesheet" href="/css/site-footer.css" />
   </head>
   <body>
     <div id="login-view" class="admin-shell">
@@ -44,8 +43,8 @@
 
       <p class="admin-intro">
         Desde acá manejás todo lo que ve el cliente: productos, precios, fotos,
-        categorías, pedidos y feedback. Los cambios se guardan al instante y ya
-        aparecen en el sitio.
+        categorías, pedidos y feedback. Guardá cada cambio para verlo reflejado
+        en el sitio.
       </p>
 
       <div class="tabs" role="tablist">
@@ -53,6 +52,7 @@
         <button type="button" class="tab" data-tab="categories">Categorías</button>
         <button type="button" class="tab" data-tab="orders">Pedidos</button>
         <button type="button" class="tab" data-tab="feedback">Feedback</button>
+        <button type="button" class="tab" data-tab="social">Redes sociales</button>
       </div>
 
       <section class="panel" data-panel="products">
@@ -66,21 +66,30 @@
           la primera es la portada y las demás se ven al hacer clic. Marcá
           <strong>Destacado</strong> para que aparezca en la home.
         </p>
+        <div class="table-tools">
+          <label class="table-search">
+            <span class="sr-only">Buscar productos</span>
+            <span class="table-search__icon" aria-hidden="true"></span>
+            <input type="search" data-table-search="products" placeholder="Buscar producto, categoría o descripción…" />
+          </label>
+          <span class="table-count" data-table-count="products" aria-live="polite"></span>
+        </div>
         <div class="table-wrap">
           <table>
             <thead>
               <tr>
                 <th></th>
-                <th>Nombre</th>
-                <th>Categoría</th>
-                <th>Precio</th>
-                <th>Estado</th>
+                <th><button class="sort-button" type="button" data-sort-column="1">Nombre</button></th>
+                <th><button class="sort-button" type="button" data-sort-column="2">Categoría</button></th>
+                <th><button class="sort-button" type="button" data-sort-column="3" data-sort-type="number">Precio</button></th>
+                <th><button class="sort-button" type="button" data-sort-column="4">Estado</button></th>
                 <th></th>
               </tr>
             </thead>
-            <tbody id="products-tbody"></tbody>
+            <tbody id="products-tbody" data-table-body="products"></tbody>
           </table>
         </div>
+        <p class="table-empty hidden" data-table-empty="products">No encontramos productos con esa búsqueda.</p>
       </section>
 
       <section class="panel hidden" data-panel="categories">
@@ -93,21 +102,30 @@
           Extras, Creaciones). El <strong>Grupo</strong> decide en qué filtro
           aparece y <strong>Home</strong> decide si se muestra en la portada.
         </p>
+        <div class="table-tools">
+          <label class="table-search">
+            <span class="sr-only">Buscar categorías</span>
+            <span class="table-search__icon" aria-hidden="true"></span>
+            <input type="search" data-table-search="categories" placeholder="Buscar categoría o grupo…" />
+          </label>
+          <span class="table-count" data-table-count="categories" aria-live="polite"></span>
+        </div>
         <div class="table-wrap">
           <table>
             <thead>
               <tr>
                 <th></th>
-                <th>Nombre</th>
-                <th>Grupo</th>
-                <th>Home</th>
-                <th>Productos</th>
+                <th><button class="sort-button" type="button" data-sort-column="1">Nombre</button></th>
+                <th><button class="sort-button" type="button" data-sort-column="2">Grupo</button></th>
+                <th><button class="sort-button" type="button" data-sort-column="3">Home</button></th>
+                <th><button class="sort-button" type="button" data-sort-column="4" data-sort-type="number">Productos</button></th>
                 <th></th>
               </tr>
             </thead>
-            <tbody id="categories-tbody"></tbody>
+            <tbody id="categories-tbody" data-table-body="categories"></tbody>
           </table>
         </div>
+        <p class="table-empty hidden" data-table-empty="categories">No encontramos categorías con esa búsqueda.</p>
       </section>
 
       <section class="panel hidden" data-panel="orders">
@@ -120,21 +138,30 @@
           <strong>estado</strong> a <em>confirmed</em>, <em>done</em> o
           <em>cancelled</em> según avance el pedido.
         </p>
+        <div class="table-tools">
+          <label class="table-search">
+            <span class="sr-only">Buscar pedidos</span>
+            <span class="table-search__icon" aria-hidden="true"></span>
+            <input type="search" data-table-search="orders" placeholder="Buscar cliente, dirección, estado o producto…" />
+          </label>
+          <span class="table-count" data-table-count="orders" aria-live="polite"></span>
+        </div>
         <div class="table-wrap">
           <table>
             <thead>
               <tr>
-                <th>#</th>
-                <th>Cliente</th>
-                <th>Total</th>
-                <th>Estado</th>
-                <th>Items</th>
-                <th></th>
+                <th><button class="sort-button" type="button" data-sort-column="0" data-sort-type="number">#</button></th>
+                <th><button class="sort-button" type="button" data-sort-column="1">Cliente</button></th>
+                <th><button class="sort-button" type="button" data-sort-column="2" data-sort-type="number">Total</button></th>
+                <th><button class="sort-button" type="button" data-sort-column="3">Estado</button></th>
+                <th><button class="sort-button" type="button" data-sort-column="4">Productos</button></th>
+                <th><button class="sort-button" type="button" data-sort-column="5" data-sort-type="date">Fecha</button></th>
               </tr>
             </thead>
-            <tbody id="orders-tbody"></tbody>
+            <tbody id="orders-tbody" data-table-body="orders"></tbody>
           </table>
         </div>
+        <p class="table-empty hidden" data-table-empty="orders">No encontramos pedidos con esa búsqueda.</p>
       </section>
 
       <section class="panel hidden" data-panel="feedback">
@@ -146,19 +173,57 @@
           Calificaciones y comentarios que dejan los clientes en la página de
           Feedback.
         </p>
+        <div class="table-tools">
+          <label class="table-search">
+            <span class="sr-only">Buscar feedback</span>
+            <span class="table-search__icon" aria-hidden="true"></span>
+            <input type="search" data-table-search="feedback" placeholder="Buscar por email, calificación o comentario…" />
+          </label>
+          <span class="table-count" data-table-count="feedback" aria-live="polite"></span>
+        </div>
         <div class="table-wrap">
           <table>
             <thead>
               <tr>
-                <th>Email</th>
-                <th>Rating</th>
-                <th>Comentario</th>
-                <th>Fecha</th>
+                <th><button class="sort-button" type="button" data-sort-column="0">Email</button></th>
+                <th><button class="sort-button" type="button" data-sort-column="1" data-sort-type="number">Calificación</button></th>
+                <th><button class="sort-button" type="button" data-sort-column="2">Comentario</button></th>
+                <th><button class="sort-button" type="button" data-sort-column="3" data-sort-type="date">Fecha</button></th>
               </tr>
             </thead>
-            <tbody id="feedback-tbody"></tbody>
+            <tbody id="feedback-tbody" data-table-body="feedback"></tbody>
           </table>
         </div>
+        <p class="table-empty hidden" data-table-empty="feedback">No encontramos comentarios con esa búsqueda.</p>
+      </section>
+
+      <section class="panel hidden" data-panel="social">
+        <div class="toolbar">
+          <h2>Redes sociales</h2>
+        </div>
+        <p class="panel-hint">
+          Pegá los enlaces a los perfiles oficiales de Lattente. Se mostrarán
+          en el footer de todas las páginas; si dejás uno vacío, no aparecerá.
+        </p>
+        <form id="social-links-form">
+          <div class="grid-form social-links-grid">
+            <div class="field">
+              <label for="social-instagram">Instagram</label>
+              <input id="social-instagram" name="instagram" type="url" inputmode="url" placeholder="https://instagram.com/tu-cuenta" />
+            </div>
+            <div class="field">
+              <label for="social-facebook">Facebook</label>
+              <input id="social-facebook" name="facebook" type="url" inputmode="url" placeholder="https://facebook.com/tu-página" />
+            </div>
+            <div class="field">
+              <label for="social-tiktok">TikTok</label>
+              <input id="social-tiktok" name="tiktok" type="url" inputmode="url" placeholder="https://tiktok.com/@tu-cuenta" />
+            </div>
+          </div>
+          <div class="toolbar" style="justify-content:flex-end;margin:0">
+            <button class="btn" type="submit">Guardar enlaces</button>
+          </div>
+        </form>
       </section>
     </div>
 
@@ -166,6 +231,5 @@
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
     <script src="/js/admin.js" defer></script>
-    <script src="/js/site-footer.js"></script>
   </body>
 </html>

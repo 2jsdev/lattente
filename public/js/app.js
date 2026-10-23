@@ -74,17 +74,30 @@
     const drawer = document.querySelector("[data-cart-drawer]");
     if (!drawer) return;
 
-    const open = () => {
+    let lastTrigger = null;
+    const closeButton = drawer.querySelector("[data-close-cart]");
+    const open = (event) => {
+      lastTrigger = event?.currentTarget || document.activeElement;
       drawer.classList.add("is-open");
+      document.body.classList.add("cart-open");
       renderCartDrawer();
+      closeButton?.focus();
     };
-    const close = () => drawer.classList.remove("is-open");
+    const close = () => {
+      drawer.classList.remove("is-open");
+      document.body.classList.remove("cart-open");
+      lastTrigger?.focus();
+    };
 
     document.querySelectorAll("[data-open-cart]").forEach((btn) => {
       btn.addEventListener("click", open);
     });
     drawer.querySelector("[data-close-cart]")?.addEventListener("click", close);
     drawer.querySelector(".cart-backdrop")?.addEventListener("click", close);
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && drawer.classList.contains("is-open")) close();
+    });
 
     drawer.addEventListener("click", (event) => {
       const btn = event.target.closest("[data-remove]");

@@ -64,6 +64,10 @@
   transition: background-color 160ms ease, color 160ms ease;
 }
 
+.site-footer__social a[hidden] {
+  display: none;
+}
+
 .site-footer__social svg {
   width: 1.3rem;
   height: 1.3rem;
