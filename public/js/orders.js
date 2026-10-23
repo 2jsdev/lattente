@@ -119,6 +119,7 @@
     const box = document.querySelector("[data-order-products]");
     const countEl = document.querySelector("[data-order-count]");
     const totalEl = document.querySelector("[data-order-total]");
+    const deliveryFields = document.querySelector(".orders-fields");
     const submitButton = document.querySelector('[data-order-form] [type="submit"]');
     if (!box || rendering) return;
 
@@ -128,6 +129,7 @@
 
     const count = cartCount(cart);
     if (submitButton) submitButton.disabled = count === 0;
+    if (deliveryFields) deliveryFields.hidden = count === 0;
     if (countEl) {
       countEl.textContent =
         count === 0
@@ -143,8 +145,8 @@
         <div class="order-empty">
           <span class="order-empty__icon" aria-hidden="true">＋</span>
           <div>
-            <strong>Tu pedido empieza aquí</strong>
-            <p>Agregá productos del catálogo y los vas a ver en este resumen.</p>
+            <strong>Tu resumen está vacío</strong>
+            <p>Elegí productos del catálogo. Después vas a poder indicar dónde entregarlos.</p>
           </div>
         </div>`;
     } else {

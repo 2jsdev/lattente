@@ -34,7 +34,7 @@
     <main class="orders-page">
       <header class="orders-intro">
         <div class="orders-intro__copy">
-          <h1>Tu pedido</h1>
+          <h1>Armá tu pedido</h1>
           <p>
             Elegí tus favoritos, indicá dónde entregarlos y enviá tu pedido.
           </p>
@@ -78,16 +78,16 @@
           <p class="orders-catalog-empty" data-catalog-empty hidden>No hay productos con esa búsqueda.</p>
         </section>
 
-        <aside class="orders-checkout" aria-labelledby="checkout-title">
+        <aside class="orders-checkout" id="order-summary" aria-labelledby="checkout-title">
           <form class="orders-panel" data-order-form>
             <div class="orders-panel__head">
-              <h2 id="checkout-title">Tu pedido</h2>
+              <h2 id="checkout-title">Resumen del pedido</h2>
               <p class="orders-panel__count" data-order-count>0 productos</p>
             </div>
 
             <div class="orders-cart" data-order-products aria-live="polite"></div>
 
-            <section class="orders-fields" aria-labelledby="delivery-title">
+            <section class="orders-fields" aria-labelledby="delivery-title" hidden>
               <h3 id="delivery-title">Datos de entrega</h3>
               <div class="field">
                 <label for="email">Correo electrónico</label>
@@ -131,7 +131,7 @@
       <div class="cart-backdrop"></div>
       <aside class="cart-panel" role="dialog" aria-modal="true" aria-labelledby="cart-title">
         <div class="cart-panel__head">
-          <h2 id="cart-title">Tu pedido</h2>
+          <h2 id="cart-title">Carrito</h2>
           <button type="button" data-close-cart class="cart-close" aria-label="Cerrar carrito">
             <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
               <path d="m6 6 12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
@@ -139,12 +139,12 @@
           </button>
         </div>
         <div class="cart-list" data-cart-list></div>
-        <div>
-          <div class="cart-total">
+        <div class="cart-panel__footer">
+          <div class="cart-total" data-cart-total-row hidden>
             <span>Total</span>
             <span data-cart-total>0,00 Bs.</span>
           </div>
-          <a class="btn" href="/orders">Ir a Pedido</a>
+          <a class="btn" data-cart-action href="#catalog-title">Volver al catálogo</a>
         </div>
       </aside>
     </div>
