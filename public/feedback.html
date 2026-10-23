@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Lattente — Feedback</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Outfit:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/css/styles.css" />
+  </head>
+  <body class="feedback-page">
+    <nav class="site-topnav" aria-label="Principal">
+      <a href="/" data-nav="home" class="site-topnav__home">Portada</a>
+      <a href="/menu" data-nav="menu">Menú</a>
+      <a href="/orders" data-nav="orders">Pedido</a>
+      <a href="/feedback" data-nav="feedback">Feedback</a>
+    </nav>
+
+    <main class="feedback-grid">
+      <section class="feedback-copy">
+        <h1>Queremos que tu experiencia con nuestro servicio sea siempre la mejor.</h1>
+        <hr class="section-rule" />
+        <p>Ayúdanos a mejorar calificando nuestros servicios:</p>
+      </section>
+
+      <section class="feedback-form-wrap">
+        <form class="panel feedback-panel" data-feedback-form>
+          <h2>Tu calificación</h2>
+
+          <div class="field">
+            <label for="email">Correo</label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              required
+              autocomplete="email"
+              inputmode="email"
+              placeholder="tu@correo.com"
+            />
+          </div>
+
+          <div class="field">
+            <label id="rating-label">¿Cómo estuvo el servicio?</label>
+            <div class="feedback-faces" role="radiogroup" aria-labelledby="rating-label">
+              <label title="Muy mal">
+                <input type="radio" name="rating" value="1" required />
+                <span aria-hidden="true">😠</span>
+                <span class="visually-hidden">Muy mal</span>
+              </label>
+              <label title="Mal">
+                <input type="radio" name="rating" value="2" />
+                <span aria-hidden="true">🙁</span>
+                <span class="visually-hidden">Mal</span>
+              </label>
+              <label title="Neutral">
+                <input type="radio" name="rating" value="3" />
+                <span aria-hidden="true">😐</span>
+                <span class="visually-hidden">Neutral</span>
+              </label>
+              <label title="Bien">
+                <input type="radio" name="rating" value="4" />
+                <span aria-hidden="true">🙂</span>
+                <span class="visually-hidden">Bien</span>
+              </label>
+              <label title="Excelente">
+                <input type="radio" name="rating" value="5" />
+                <span aria-hidden="true">😄</span>
+                <span class="visually-hidden">Excelente</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="comment">Comentario</label>
+            <textarea
+              id="comment"
+              name="comment"
+              rows="2"
+              placeholder="Contanos tu experiencia…"
+            ></textarea>
+          </div>
+
+          <button class="btn" type="submit">Enviar</button>
+          <p class="panel-note">No envíes contraseñas ni datos sensibles.</p>
+        </form>
+      </section>
+
+      <figure class="feedback-photo">
+        <img
+          src="https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=1600&q=80"
+          alt="Croissant Lattente"
+          loading="lazy"
+        />
+      </figure>
+
+      <section class="feedback-contact">
+        <div>
+          <h3>Direccion</h3>
+          <p>Av. América 763, Cochabamba</p>
+        </div>
+        <div>
+          <h3>Social media</h3>
+          <div class="social-row">
+            <a href="https://instagram.com" aria-label="Instagram" target="_blank" rel="noopener">IG</a>
+            <a href="https://facebook.com" aria-label="Facebook" target="_blank" rel="noopener">FB</a>
+            <a href="https://tiktok.com" aria-label="TikTok" target="_blank" rel="noopener">TT</a>
+          </div>
+        </div>
+        <a class="email-link" href="mailto:hola@lattente.bo">Email ↗</a>
+      </section>
+    </main>
+
+    <script src="/js/cart.js"></script>
+    <script src="/js/app.js"></script>
+    <script src="/js/feedback.js"></script>
+  </body>
+</html>

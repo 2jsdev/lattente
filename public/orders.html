@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Lattente — Pedido</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Outfit:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/css/styles.css" />
+  </head>
+  <body class="orders-body">
+    <nav class="site-topnav" aria-label="Principal">
+      <a href="/" data-nav="home" class="site-topnav__home">Portada</a>
+      <a href="/menu" data-nav="menu">Menú</a>
+      <a href="/orders" data-nav="orders">Pedido</a>
+      <a href="/feedback" data-nav="feedback">Feedback</a>
+    </nav>
+
+    <main class="orders-page">
+      <header class="orders-intro">
+        <div class="orders-intro__copy">
+          <h1>Tu pedido</h1>
+          <p>
+            Buscá lo que se te antoja, sumalo al carrito y enviános email y
+            dirección. Horneamos en lotes chicos cada mañana.
+          </p>
+        </div>
+        <ul class="orders-notes" aria-label="Información del pedido">
+          <li>
+            <strong>Mismo día</strong>
+            <span>Para antojos urgentes, llamanos y confirmamos stock.</span>
+          </li>
+          <li>
+            <strong>Después de las 16:00</strong>
+            <span>El pedido pasa a la hornada de la mañana siguiente.</span>
+          </li>
+        </ul>
+      </header>
+
+      <div class="orders-layout">
+        <section class="orders-catalog" aria-labelledby="catalog-title">
+          <div class="orders-catalog__toolbar">
+            <h2 id="catalog-title">Productos</h2>
+            <label class="orders-search">
+              <span class="orders-search__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+                  <circle cx="10.5" cy="10.5" r="6.25" stroke="currentColor" stroke-width="1.75" />
+                  <path d="M15.2 15.2 20 20" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
+                </svg>
+              </span>
+              <input
+                type="search"
+                name="catalog-q"
+                data-catalog-search
+                placeholder="Buscar por nombre…"
+                aria-label="Buscar producto"
+                autocomplete="off"
+                enterkeyhint="search"
+              />
+            </label>
+          </div>
+          <div class="orders-filters" data-catalog-filters role="toolbar" aria-label="Filtrar por categoría"></div>
+          <div class="orders-product-grid" data-catalog-grid></div>
+          <p class="orders-catalog-empty" data-catalog-empty hidden>No hay productos con esa búsqueda.</p>
+        </section>
+
+        <aside class="orders-checkout" aria-labelledby="checkout-title">
+          <form class="orders-panel" data-order-form>
+            <div class="orders-panel__head">
+              <h2 id="checkout-title">Resumen</h2>
+              <p class="orders-panel__count" data-order-count>0 productos</p>
+            </div>
+
+            <div class="orders-cart" data-order-products></div>
+
+            <div class="orders-fields">
+              <div class="field">
+                <label for="email">Correo electrónico</label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  required
+                  autocomplete="email"
+                  placeholder="tu@correo.com"
+                />
+              </div>
+              <div class="field">
+                <label for="address">Dirección de entrega</label>
+                <input
+                  id="address"
+                  name="address"
+                  type="text"
+                  required
+                  autocomplete="street-address"
+                  placeholder="Calle, número, referencia"
+                />
+              </div>
+              <input id="quantity" name="quantity" type="hidden" value="1" />
+            </div>
+
+            <div class="orders-panel__footer">
+              <div class="orders-total">
+                <span>Total</span>
+                <strong data-order-total>0,00 Bs.</strong>
+              </div>
+              <button class="btn" type="submit">Enviar pedido</button>
+              <p class="panel-note">Nunca envíes contraseñas ni datos sensibles.</p>
+            </div>
+          </form>
+        </aside>
+      </div>
+    </main>
+
+    <script src="/js/cart.js"></script>
+    <script src="/js/app.js"></script>
+    <script src="/js/orders.js"></script>
+  </body>
+</html>

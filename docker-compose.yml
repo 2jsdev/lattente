@@ -1,0 +1,57 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: lattente-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: lattente
+      POSTGRES_PASSWORD: lattente
+      POSTGRES_DB: lattente
+    ports:
+      - "5433:5432"
+    volumes:
+      - lattente_pg:/var/lib/postgresql/data
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./db/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U lattente -d lattente']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: lattente:local
+    container_name: lattente-app
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3030
+      HOST: 0.0.0.0
+      DATABASE_URL: postgresql://lattente:lattente@db:5432/lattente
+      LOG_LEVEL: info
+      TRUST_PROXY: 1
+      UPLOAD_DIR: /app/data/uploads
+    ports:
+      - "3030:3030"
+    volumes:
+      # Persists uploaded photos across rebuilds, mirroring the CapRover
+      # persistent-volume setup.
+      - lattente_uploads:/app/data/uploads
+    healthcheck:
+      # 127.0.0.1, not "localhost": in Alpine "localhost" resolves to ::1
+      # first, but the app listens on IPv4 0.0.0.0, so the IPv6 attempt is
+      # refused and the healthcheck never passes.
+      test: ['CMD', 'wget', '-q', '-O-', 'http://127.0.0.1:3030/api/health']
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  lattente_pg:
+  lattente_uploads:

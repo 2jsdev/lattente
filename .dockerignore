@@ -1,0 +1,39 @@
+# Build context is the repo root (docker-compose + CapRover tarball root).
+
+# Dependencies & build outputs
+node_modules
+**/node_modules
+dist
+**/dist
+coverage
+**/coverage
+*.log
+
+# Secrets / local env (never ship into images)
+.env
+.env.*
+!.env.example
+
+# Repo / agent / docs noise
+.git
+.gitignore
+.dockerignore
+.github
+.cursor
+graphify-out
+**/graphify-out
+.vscode
+README.md
+docs
+**/docs
+
+# Docker / compose files are not needed inside the image
+Dockerfile
+docker-compose*.yml
+deploy.tar
+
+# Runtime upload target (populated at runtime, mounted as a volume in prod)
+data
+**/data
+
+.DS_Store

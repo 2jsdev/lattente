@@ -1,0 +1,140 @@
+name: Deploy to CapRover
+
+on:
+  push:
+    branches: ['main']
+    paths:
+      - 'server/**'
+      - 'public/**'
+      - 'db/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'Dockerfile'
+      - '.dockerignore'
+      - 'captain-definition'
+      - '.github/workflows/deploy-caprover.yaml'
+  # Manual deploy, for when the code is already on main but the deploy
+  # failed, or when a deploy is needed without touching any tracked file.
+  workflow_dispatch:
+
+jobs:
+  verify:
+    name: Verify build
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: lattente
+          POSTGRES_PASSWORD: lattente
+          POSTGRES_DB: lattente
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U lattente -d lattente"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://lattente:lattente@localhost:5432/lattente
+      NODE_ENV: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          # Patched 24.x LTS — same base image as the Dockerfile below.
+          node-version: 24.22.1
+          cache: npm
+      - run: npm ci
+      # The migration is the same code path the container runs on boot, so
+      # running it here proves the schema and seed still apply cleanly before
+      # CapRover ever sees the image.
+      - name: Run database migration
+        run: npm run db:migrate
+      - name: Boot the app against the migrated database
+        run: |
+          set -euo pipefail
+          node server/index.js &
+          APP_PID=$!
+          trap 'kill $APP_PID 2>/dev/null || true' EXIT
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:3030/api/health > /dev/null; then
+              echo "Health check OK"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "::error::App did not become healthy in time"
+          exit 1
+
+  deploy:
+    name: Deploy to CapRover
+    runs-on: ubuntu-latest
+    needs: [verify]
+    steps:
+      - uses: actions/checkout@v4
+
+      # Tarball layout (build context is the tarball root):
+      #   deploy.tar/
+      #     captain-definition
+      #     Dockerfile
+      #     package.json
+      #     package-lock.json
+      #     server/
+      #     public/
+      #     db/
+      #
+      # CapRover builds with the tarball root as the context, so the
+      # Dockerfile's COPY paths are relative to the repo root.
+      - name: Create deploy tarball
+        run: |
+          set -euo pipefail
+          printf '%s\n' \
+            '{"schemaVersion":2,"dockerfilePath":"./Dockerfile"}' > ./captain-definition
+          tar \
+            --exclude='.git' \
+            --exclude='node_modules' \
+            --exclude='*/node_modules' \
+            --exclude='*/*/node_modules' \
+            --exclude='deploy.tar' \
+            --exclude='.env' \
+            --exclude='.env.*' \
+            --exclude='*/.env' \
+            --exclude='*/.env.*' \
+            --exclude='*/*/.env' \
+            --exclude='*/*/.env.*' \
+            --exclude='dist' \
+            --exclude='*/dist' \
+            --exclude='*/*/dist' \
+            --exclude='graphify-out' \
+            --exclude='*/graphify-out' \
+            --exclude='*/*/graphify-out' \
+            --exclude='coverage' \
+            --exclude='*/coverage' \
+            --exclude='data' \
+            --exclude='*/data' \
+            --exclude='*.log' \
+            -cf deploy.tar \
+            captain-definition Dockerfile package.json package-lock.json server public db
+
+      # Bypass the caprover/deploy-from-github@v1.2.0 action (which installs
+      # caprover-cli 2.4.x with a strict commander that conflicts on `-t`).
+      # We pin caprover-cli to 2.2.3 — the last release before commander was
+      # upgraded, so the dual `-t, --tarFile` / `-t, --appToken` short flag
+      # conflict is silently tolerated instead of throwing on startup.
+      - name: Deploy to CapRover
+        env:
+          CAPROVER_SERVER: ${{ secrets.CAPROVER_SERVER }}
+          CAPROVER_APP: ${{ secrets.CAPROVER_APP }}
+          CAPROVER_TOKEN: ${{ secrets.CAPROVER_TOKEN }}
+        run: |
+          docker run --rm \
+            -v "/var/run/docker.sock":"/var/run/docker.sock" \
+            -v "$(pwd)":"/github/workspace" \
+            -w "/github/workspace" \
+            -e CAPROVER_SERVER \
+            -e CAPROVER_APP \
+            -e CAPROVER_TOKEN \
+            node:24.22.1-bookworm-slim \
+            bash -c '
+              set -euo pipefail
+              npm install -g caprover@2.2.3
+              caprover deploy --caproverUrl "$CAPROVER_SERVER" --appToken "$CAPROVER_TOKEN" --appName "$CAPROVER_APP" --tarFile ./deploy.tar
+            '
