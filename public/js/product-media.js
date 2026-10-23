@@ -31,11 +31,23 @@
       .replace(/</g, "&lt;");
   }
 
+  function safeImageUrl(value) {
+    const raw = String(value || "").trim();
+    if (!raw) return "";
+    try {
+      const url = new URL(raw, window.location.origin);
+      return url.protocol === "http:" || url.protocol === "https:" ? url.href : "";
+    } catch {
+      return "";
+    }
+  }
+
   function productImages(product) {
     if (Array.isArray(product?.images) && product.images.length) {
-      return product.images.filter(Boolean);
+      return product.images.map(safeImageUrl).filter(Boolean);
     }
-    return product?.image_url ? [product.image_url] : [];
+    const image = safeImageUrl(product?.image_url);
+    return image ? [image] : [];
   }
 
   function renderProductPhotos(product) {

@@ -28,10 +28,18 @@
 .site-footer__contact {
   display: grid;
   align-content: center;
-  justify-items: start;
+  justify-items: center;
   gap: clamp(1rem, 2.2vw, 1.6rem);
   padding: clamp(1.5rem, 4vw, 3.5rem);
   background: var(--chocolate, #3f2a22);
+  text-align: center;
+}
+
+.site-footer__brand {
+  display: block;
+  width: clamp(6.5rem, 10vw, 8.5rem);
+  height: auto;
+  object-fit: contain;
 }
 
 .site-footer__contact h2 {

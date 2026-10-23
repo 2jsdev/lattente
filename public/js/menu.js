@@ -14,6 +14,26 @@
   let searchTimer = null;
   let searchGeneration = 0;
 
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function safeImageUrl(value) {
+    const raw = String(value || "").trim();
+    if (!raw) return "";
+    try {
+      const url = new URL(raw, window.location.origin);
+      return url.protocol === "http:" || url.protocol === "https:" ? url.href : "";
+    } catch {
+      return "";
+    }
+  }
+
   function normalizeSearch(value) {
     return String(value || "")
       .normalize("NFD")
@@ -104,8 +124,8 @@
     filters.innerHTML = groups
       .map(
         (g) => `
-      <button type="button" class="menu-chip${g === activeGroup ? " is-active" : ""}" data-group="${g}">
-        ${GROUP_LABELS[g] || g}
+      <button type="button" class="menu-chip${g === activeGroup ? " is-active" : ""}" data-group="${escapeHtml(g)}" aria-pressed="${g === activeGroup}">
+        ${escapeHtml(GROUP_LABELS[g] || g)}
       </button>`
       )
       .join("");
@@ -128,9 +148,9 @@
     grid.innerHTML = list
       .map(
         (cat, i) => `
-      <button type="button" class="category-tile" data-open-category="${cat.slug}" style="animation-delay:${Math.min(i, 12) * 35}ms">
-        <img src="${cat.image_url}" alt="" loading="lazy" />
-        <h2>${cat.name}</h2>
+      <button type="button" class="category-tile" data-open-category="${escapeHtml(cat.slug)}" style="animation-delay:${Math.min(i, 12) * 35}ms">
+        <img src="${escapeHtml(safeImageUrl(cat.image_url))}" alt="" loading="lazy" />
+        <h2>${escapeHtml(cat.name)}</h2>
       </button>`
       )
       .join("");
@@ -150,8 +170,8 @@
 
       if (title) title.textContent = data.name;
       if (image) {
-        image.src = data.image_url || "";
-        image.alt = data.name;
+        image.src = safeImageUrl(data.image_url);
+        image.alt = String(data.name || "");
       }
 
       if (list) {
@@ -165,11 +185,11 @@
             <article class="menu-item" style="animation-delay:${i * 40}ms">
               ${renderProductPhotos(p)}
               <div class="menu-item-body">
-                <h3>${p.name}</h3>
-                <p>${p.description || ""}</p>
-                <p class="price">${formatPrice(p.price, p.currency)}</p>
+                <h3>${escapeHtml(p.name)}</h3>
+                <p>${escapeHtml(p.description || "")}</p>
+                <p class="price">${escapeHtml(formatPrice(p.price, p.currency))}</p>
               </div>
-              <button class="add" type="button" data-id="${p.id}" data-name="${p.name}" data-price="${p.price}" data-currency="${p.currency}" aria-label="Agregar ${p.name}">+</button>
+              <button class="add" type="button" data-id="${escapeHtml(p.id)}" data-name="${escapeHtml(p.name)}" data-price="${escapeHtml(p.price)}" data-currency="${escapeHtml(p.currency)}" aria-label="Agregar ${escapeHtml(p.name)}">+</button>
             </article>`
             )
             .join("");
@@ -239,11 +259,11 @@
             <article class="menu-item" style="animation-delay:${i * 40}ms">
               ${renderProductPhotos(p)}
               <div class="menu-item-body">
-                <h3>${p.name}</h3>
-                <p>${p.description || p.category_name || ""}</p>
-                <p class="price">${formatPrice(p.price, p.currency)}</p>
+                <h3>${escapeHtml(p.name)}</h3>
+                <p>${escapeHtml(p.description || p.category_name || "")}</p>
+                <p class="price">${escapeHtml(formatPrice(p.price, p.currency))}</p>
               </div>
-              <button class="add" type="button" data-id="${p.id}" data-name="${p.name}" data-price="${p.price}" data-currency="${p.currency}" aria-label="Agregar ${p.name}">+</button>
+              <button class="add" type="button" data-id="${escapeHtml(p.id)}" data-name="${escapeHtml(p.name)}" data-price="${escapeHtml(p.price)}" data-currency="${escapeHtml(p.currency)}" aria-label="Agregar ${escapeHtml(p.name)}">+</button>
             </article>`
             )
             .join("");

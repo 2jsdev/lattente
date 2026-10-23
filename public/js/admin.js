@@ -22,6 +22,7 @@ let categoriesCache = [];
 let toastTimer = null;
 let modalReturnFocus = null;
 let modalResizeObserver = null;
+let modalBackgroundInertState = [];
 const tableStates = new Map();
 
 function getToken() {
@@ -178,10 +179,13 @@ function showApp() {
 }
 
 function closeModal() {
+  if (els.modalRoot.classList.contains("hidden")) return;
   els.modalRoot.classList.add("hidden");
   els.modalRoot.innerHTML = "";
   modalResizeObserver?.disconnect();
   modalResizeObserver = null;
+  modalBackgroundInertState.forEach(({ element, wasInert }) => { element.inert = wasInert; });
+  modalBackgroundInertState = [];
   document.documentElement.classList.remove("modal-open");
   document.body.classList.remove("modal-open");
   modalReturnFocus?.focus();
@@ -213,6 +217,10 @@ function openModal(title, bodyHtml, onSubmit) {
     </div>
   `;
   els.modalRoot.classList.remove("hidden");
+  modalBackgroundInertState = Array.from(document.body.children)
+    .filter((element) => element !== els.modalRoot && element !== els.toast)
+    .map((element) => ({ element, wasInert: element.inert }));
+  modalBackgroundInertState.forEach(({ element }) => { element.inert = true; });
 
   els.modalRoot.querySelector("[data-cancel]").addEventListener("click", closeModal);
   els.modalRoot.querySelector("[data-modal-close]").addEventListener("click", closeModal);
@@ -338,7 +346,31 @@ function setupModalScrollbar(form) {
 }
 
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape" && !els.modalRoot.classList.contains("hidden")) closeModal();
+  if (els.modalRoot.classList.contains("hidden")) return;
+  if (event.key === "Escape") {
+    closeModal();
+    return;
+  }
+  if (event.key !== "Tab") return;
+
+  const dialog = els.modalRoot.querySelector('[role="dialog"]');
+  const focusable = Array.from(dialog?.querySelectorAll(
+    'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+  ) || []).filter((element) => !element.hidden && element.getClientRects().length);
+  if (!focusable.length) {
+    event.preventDefault();
+    dialog?.focus();
+    return;
+  }
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+  if (event.shiftKey && (document.activeElement === first || !dialog.contains(document.activeElement))) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && (document.activeElement === last || !dialog.contains(document.activeElement))) {
+    event.preventDefault();
+    first.focus();
+  }
 });
 
 function field(name, label, value = "", type = "text", extra = "") {

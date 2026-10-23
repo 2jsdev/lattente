@@ -59,10 +59,10 @@ FROM (VALUES
   ('cafes-calientes', 'LATTES', 'Espresso servido con leche texturizada y espuma ligera.', 20.00,
    'https://images.unsplash.com/photo-1561882468-9110e03e0f78?w=800&q=80',
    '["https://images.unsplash.com/photo-1561882468-9110e03e0f78?w=800&q=80","https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=800&q=80"]', FALSE),
-  ('cafes-calientes', 'RED VELVET CUPCAKES', 'Cupcake red velvet con frosting suave.', 36.00,
+  ('postres', 'RED VELVET CUPCAKES', 'Cupcake red velvet con frosting suave.', 36.00,
    'https://images.unsplash.com/photo-1614707267537-b85aaf00c4b7?w=800&q=80',
    '["https://images.unsplash.com/photo-1614707267537-b85aaf00c4b7?w=800&q=80"]', FALSE),
-  ('cafes-calientes', 'KOREAN SALT BREAD', 'Pan salado coreano, horneado fresco.', 45.00,
+  ('bolleria', 'KOREAN SALT BREAD', 'Pan salado coreano, horneado fresco.', 45.00,
    'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=800&q=80',
    '["https://images.unsplash.com/photo-1509440159596-0249088772ff?w=800&q=80"]', FALSE),
 

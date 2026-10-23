@@ -15,6 +15,13 @@
             />
           </figure>
           <section class="site-footer__contact" aria-label="Contacto">
+            <img
+              class="site-footer__brand"
+              src="/images/lattente-coffee-emblem.png"
+              alt="Lattente Coffee Shop"
+              loading="lazy"
+              decoding="async"
+            />
             <div>
               <h2>Dirección</h2>
               <address>Av. América 763, Cochabamba</address>

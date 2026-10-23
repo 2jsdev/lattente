@@ -348,14 +348,43 @@ body.home-page .hero-content {
   position: relative;
   min-height: calc(100dvh - var(--header-height));
   color: var(--cream);
-  background:
-    linear-gradient(115deg, rgba(28, 16, 12, 0.55) 0%, rgba(28, 16, 12, 0.2) 50%, rgba(28, 16, 12, 0.4) 100%),
-    url("https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=1800&q=80")
-      center / cover no-repeat;
+  background: url("/images/hero-coffee-poster.jpg") center / cover no-repeat;
   overflow: hidden;
 }
 
+.hero::before {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.76) 0%,
+    rgba(0, 0, 0, 0.56) 24%,
+    rgba(0, 0, 0, 0.2) 58%,
+    rgba(0, 0, 0, 0) 82%
+  );
+  content: "";
+  pointer-events: none;
+}
+
+.hero-video {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 800ms ease;
+}
+
+.hero-video.is-active {
+  opacity: 1;
+}
+
 .hero-content {
+  position: relative;
+  z-index: 2;
   max-width: var(--max);
   margin: 0 auto;
   padding: clamp(4rem, 14vh, 9rem) 2rem 4.5rem;
@@ -388,6 +417,7 @@ body.home-page .hero-content {
   font-size: clamp(1.1rem, 2vw, 1.4rem);
   line-height: 1.45;
   color: rgba(253, 248, 232, 0.92);
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.38);
 }
 
 .hero-link {
@@ -2611,6 +2641,14 @@ body.cart-open {
 }
 
 @media (max-width: 900px) {
+  body.home-page {
+    --header-height: 9.75rem;
+  }
+
+  body:not(.home-page) {
+    --header-height: 6.5rem;
+  }
+
   .product-grid,
   .info-cards,
   .menu-detail,
@@ -2650,49 +2688,77 @@ body.cart-open {
 
   .app-header,
   .app-header:has(.hero-search) {
-    display: flex;
-    flex-direction: column;
-    justify-items: center;
-    gap: 0.85rem;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto auto;
+    align-items: center;
+    gap: 0.5rem 0.8rem;
+    min-height: var(--header-height);
+    padding: 0.5rem 1rem;
   }
 
-  /* Back into the flow so the stacked rows don't collide with it. */
   .app-header .brand {
     position: static;
     transform: none;
+    grid-column: 1 / -1;
+    grid-row: 1;
     justify-self: center;
-    order: -2;
+    order: 0;
+  }
+
+  .app-header .brand img {
+    width: clamp(132px, 32vw, 170px);
   }
 
   .hero-search {
-    width: min(100%, 360px);
-    justify-self: center;
-    order: -1;
+    width: 100%;
+    max-width: none;
+    justify-self: stretch;
+    grid-column: 1 / -1;
+    grid-row: 3;
+    order: 0;
   }
 
   .app-header:has(.hero-search) .hero-search,
   .header-nav,
   .header-actions {
-    grid-column: auto;
-    grid-row: auto;
+    grid-row: 2;
   }
 
-  .header-actions {
-    width: 100%;
-    max-width: none;
-    justify-content: center;
+  .app-header:has(.hero-search) .hero-search {
+    grid-column: 1 / -1;
+    grid-row: 3;
   }
 
   .header-nav {
-    width: 100%;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 0.75rem 1rem;
+    grid-column: 1;
+    justify-self: start;
+    width: auto;
+    min-width: 0;
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+    gap: 0.55rem;
+    overflow-x: auto;
+    scrollbar-width: none;
     order: 0;
   }
 
+  .header-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .header-nav a {
+    font-size: 0.82rem;
+  }
+
   .header-actions {
-    order: 1;
+    grid-column: 2;
+    justify-self: end;
+    width: auto;
+    max-width: none;
+    justify-content: flex-end;
+    flex-wrap: nowrap;
+    order: 0;
   }
 
   .category-grid {
@@ -2718,6 +2784,49 @@ body.cart-open {
 }
 
 @media (max-width: 520px) {
+  body.home-page {
+    --header-height: 9.25rem;
+  }
+
+  body:not(.home-page) {
+    --header-height: 6.25rem;
+  }
+
+  .app-header,
+  .app-header:has(.hero-search) {
+    padding-inline: 0.75rem;
+    column-gap: 0.5rem;
+  }
+
+  .app-header .brand img {
+    width: 132px;
+  }
+
+  .header-nav {
+    gap: 0.45rem;
+  }
+
+  .header-nav a {
+    font-size: 0.76rem;
+  }
+
+  .cart-btn {
+    font-size: 1.05rem;
+  }
+
+  .menu-filters {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    max-width: 100%;
+    padding: 0.15rem 0 0.45rem;
+    scrollbar-width: thin;
+  }
+
+  .menu-chip {
+    flex: 0 0 auto;
+  }
+
   .orders-notes {
     grid-template-columns: 1fr;
   }
@@ -2770,6 +2879,10 @@ body.cart-open {
   .panel {
     opacity: 1;
     transform: none;
+  }
+
+  .hero-video {
+    display: none;
   }
 }
 

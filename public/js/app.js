@@ -116,17 +116,37 @@
     if (!drawer) return;
 
     let lastTrigger = null;
+    let backgroundInertState = [];
     const closeButton = drawer.querySelector("[data-close-cart]");
+    const focusableSelector = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+    const focusables = () => Array.from(drawer.querySelectorAll(focusableSelector)).filter((element) =>
+      !element.hidden && element.getAttribute("aria-hidden") !== "true" && element.getClientRects().length
+    );
+    const setBackgroundInert = (inert) => {
+      if (inert) {
+        backgroundInertState = Array.from(document.body.children)
+          .filter((element) => element !== drawer)
+          .map((element) => ({ element, wasInert: element.inert }));
+        backgroundInertState.forEach(({ element }) => { element.inert = true; });
+      } else {
+        backgroundInertState.forEach(({ element, wasInert }) => { element.inert = wasInert; });
+        backgroundInertState = [];
+      }
+    };
     const open = (event) => {
+      if (drawer.classList.contains("is-open")) return;
       lastTrigger = event?.currentTarget || document.activeElement;
       drawer.classList.add("is-open");
       document.body.classList.add("cart-open");
+      setBackgroundInert(true);
       renderCartDrawer();
       closeButton?.focus();
     };
     const close = () => {
+      if (!drawer.classList.contains("is-open")) return;
       drawer.classList.remove("is-open");
       document.body.classList.remove("cart-open");
+      setBackgroundInert(false);
       lastTrigger?.focus();
     };
 
@@ -140,7 +160,28 @@
     });
 
     document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape" && drawer.classList.contains("is-open")) close();
+      if (!drawer.classList.contains("is-open")) return;
+      if (event.key === "Escape") {
+        close();
+        return;
+      }
+      if (event.key !== "Tab") return;
+
+      const items = focusables();
+      if (!items.length) {
+        event.preventDefault();
+        drawer.querySelector(".cart-panel")?.focus();
+        return;
+      }
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (event.shiftKey && (document.activeElement === first || !drawer.contains(document.activeElement))) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (document.activeElement === last || !drawer.contains(document.activeElement))) {
+        event.preventDefault();
+        first.focus();
+      }
     });
 
     drawer.addEventListener("click", (event) => {
@@ -156,6 +197,61 @@
       const item = cart.readCart().find((row) => Number(row.id) === id);
       if (!item) return;
       cart.setCartQuantity(id, item.quantity + Number(quantityButton.dataset.cartQuantity));
+    });
+  }
+
+  function setupHeroVideoLoop() {
+    const videos = Array.from(document.querySelectorAll("body.home-page [data-hero-video]"));
+    if (videos.length < 2 || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const fadeMs = 800;
+    let active = videos.find((video) => video.classList.contains("is-active")) || videos[0];
+    let transitioning = false;
+
+    videos.forEach((video) => {
+      video.loop = false;
+      video.muted = true;
+      video.playsInline = true;
+    });
+
+    active.play().catch(() => {});
+
+    function waitForVideoFrame(video) {
+      if (typeof video.requestVideoFrameCallback !== "function") return Promise.resolve();
+      return new Promise((resolve) => {
+        const timeout = window.setTimeout(resolve, 180);
+        video.requestVideoFrameCallback(() => {
+          window.clearTimeout(timeout);
+          resolve();
+        });
+      });
+    }
+
+    videos.forEach((video) => {
+      video.addEventListener("timeupdate", async () => {
+        if (video !== active || transitioning || !Number.isFinite(video.duration)) return;
+        if (video.duration - video.currentTime > fadeMs / 1000) return;
+
+        transitioning = true;
+        const next = videos.find((candidate) => candidate !== active);
+        try {
+          next.currentTime = 0;
+          await next.play();
+          await waitForVideoFrame(next);
+          next.classList.add("is-active");
+
+          const previous = active;
+          active = next;
+          window.setTimeout(() => {
+            previous.classList.remove("is-active");
+            previous.pause();
+            previous.currentTime = 0;
+            transitioning = false;
+          }, fadeMs);
+        } catch {
+          transitioning = false;
+        }
+      });
     });
   }
 
@@ -182,6 +278,7 @@
     markActiveNav();
     updateCartBadge();
     setupCartDrawer();
+    setupHeroVideoLoop();
 
     document.querySelector("body.home-page .app-header .brand")?.addEventListener("click", (event) => {
       event.preventDefault();

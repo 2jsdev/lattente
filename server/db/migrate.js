@@ -78,6 +78,25 @@ async function run() {
     logger.info("Catálogo existente preservado; no se ejecuta el seed");
   }
 
+  // Correct two products that were initially loaded in the coffee category.
+  // This targeted update is safe to run on every startup and also repairs
+  // existing installations without reseeding or changing other catalog data.
+  const categoryCorrections = await pool.query(`
+    UPDATE products AS product
+    SET category_id = target.id
+    FROM categories AS target, categories AS source
+    WHERE (
+      (product.name = 'RED VELVET CUPCAKES' AND target.slug = 'postres')
+      OR (product.name = 'KOREAN SALT BREAD' AND target.slug = 'bolleria')
+    )
+      AND product.category_id = source.id
+      AND source.slug = 'cafes-calientes'
+      AND product.category_id <> target.id
+  `);
+  if (categoryCorrections.rowCount) {
+    logger.info({ count: categoryCorrections.rowCount }, "Categorías del catálogo corregidas");
+  }
+
   await pool.end();
 }
 
