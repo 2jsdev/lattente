@@ -527,10 +527,9 @@ function productFormHtml(product = null) {
       <section class="form-section full">
         <h4>Precio y visibilidad</h4>
         <div class="form-fields">
-          ${field("price", "Precio", product?.price ?? "", "number", 'step="0.01" min="0" required inputmode="decimal"')}
+          ${field("price", "Precio", product?.price ?? "", "number", 'step="1" min="0" required inputmode="decimal"')}
           ${field("currency", "Moneda", product?.currency || "Bs.", "text", 'maxlength="8"')}
-          ${field("sort_order", "Orden en el catálogo", product?.sort_order ?? 0, "number", 'step="1"')}
-          <div class="checkbox-stack">
+          <div class="checkbox-stack checkbox-options full">
             ${checkbox("featured", "Destacado en la home", Boolean(product?.featured))}
             ${checkbox("active", "Producto activo", product ? Boolean(product.active) : true)}
           </div>

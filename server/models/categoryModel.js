@@ -49,10 +49,10 @@ async function findBySlugWithProducts(slug) {
   }
 
   const products = await query(
-    `SELECT id, name, description, price, currency, image_url, images, sort_order
+    `SELECT id, name, description, price, currency, image_url, images
      FROM products
      WHERE category_id = $1 AND active = TRUE
-     ORDER BY sort_order, id`,
+     ORDER BY id`,
     [cat.rows[0].id]
   );
 

@@ -18,7 +18,6 @@ function normalizeProductInput(body, uploadedPaths = [], { partial = false } = {
     image_url,
     images,
     featured,
-    sort_order = 0,
     active,
   } = body;
 
@@ -52,8 +51,6 @@ function normalizeProductInput(body, uploadedPaths = [], { partial = false } = {
         : partial
           ? null
           : false,
-    sort_order:
-      sort_order != null && sort_order !== "" ? Number(sort_order) : null,
     active:
       active !== undefined && active !== null && active !== ""
         ? parseBool(active, true)
@@ -78,12 +75,12 @@ async function listActive({ category, featured } = {}) {
 
   const result = await query(
     `SELECT p.id, p.name, p.description, p.price, p.currency,
-            p.image_url, p.images, p.featured, p.sort_order,
+            p.image_url, p.images, p.featured,
             c.slug AS category_slug, c.name AS category_name
      FROM products p
      JOIN categories c ON c.id = p.category_id
      WHERE ${clauses.join(" AND ")}
-     ORDER BY p.sort_order, p.id`,
+     ORDER BY p.id`,
     params
   );
   return result.rows.map(withProductImages);
@@ -99,11 +96,11 @@ async function findById(id) {
 async function listAll() {
   const result = await query(
     `SELECT p.id, p.name, p.description, p.price, p.currency,
-            p.image_url, p.images, p.featured, p.sort_order, p.active, p.category_id,
+            p.image_url, p.images, p.featured, p.active, p.category_id,
             c.slug AS category_slug, c.name AS category_name
      FROM products p
      JOIN categories c ON c.id = p.category_id
-     ORDER BY c.sort_order, p.sort_order, p.id`
+     ORDER BY c.sort_order, p.id`
   );
   return result.rows.map(withProductImages);
 }
@@ -113,8 +110,8 @@ async function create(body, uploadedPaths = []) {
 
   const result = await query(
     `INSERT INTO products
-       (category_id, name, description, price, currency, image_url, images, featured, sort_order, active)
-     VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8, $9, $10)
+       (category_id, name, description, price, currency, image_url, images, featured, active)
+     VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8, $9)
      RETURNING *`,
     [
       data.category_id,
@@ -125,7 +122,6 @@ async function create(body, uploadedPaths = []) {
       data.cover,
       data.imagesJson || "[]",
       data.featured ?? false,
-      data.sort_order || 0,
       data.active ?? true,
     ]
   );
@@ -140,15 +136,14 @@ async function update(id, body, uploadedPaths = []) {
     `UPDATE products SET
        category_id = COALESCE($1, category_id),
        name = COALESCE($2, name),
-       description = CASE WHEN $13 THEN $3 ELSE description END,
+       description = CASE WHEN $12 THEN $3 ELSE description END,
        price = COALESCE($4, price),
        currency = COALESCE($5, currency),
-       image_url = CASE WHEN $11 THEN $6 ELSE image_url END,
-       images = CASE WHEN $11 THEN $7::jsonb ELSE images END,
+       image_url = CASE WHEN $10 THEN $6 ELSE image_url END,
+       images = CASE WHEN $10 THEN $7::jsonb ELSE images END,
        featured = COALESCE($8, featured),
-       sort_order = COALESCE($9, sort_order),
-       active = COALESCE($10, active)
-     WHERE id = $12
+       active = COALESCE($9, active)
+     WHERE id = $11
      RETURNING *`,
     [
       data.category_id,
@@ -159,7 +154,6 @@ async function update(id, body, uploadedPaths = []) {
       data.cover,
       data.imagesJson,
       data.featured,
-      data.sort_order,
       data.active,
       data.hasImages,
       id,

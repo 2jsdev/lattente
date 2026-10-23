@@ -256,6 +256,15 @@ a {
   color: var(--chocolate);
 }
 
+.field select {
+  appearance: none;
+  padding-right: 2.5rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='m4 6 4 4 4-4' stroke='%23402b24' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.9rem center;
+  background-size: 0.8rem;
+}
+
 .field textarea {
   min-height: 72px;
   resize: vertical;
@@ -268,7 +277,47 @@ a {
 }
 
 .field.inline input[type="checkbox"] {
-  width: auto;
+  appearance: none;
+  flex: 0 0 auto;
+  width: 1.15rem;
+  height: 1.15rem;
+  margin: 0;
+  border: 1px solid #b8a99f;
+  border-radius: 0.35rem;
+  background: #fffdf8;
+  cursor: pointer;
+  transition: background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.field.inline input[type="checkbox"]:checked {
+  border-color: var(--chocolate);
+  background-color: var(--chocolate);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='m3.5 8.25 3 3 6-6.5' stroke='%23fff8e8' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 0.85rem;
+}
+
+.field.inline input[type="checkbox"]:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(64, 43, 36, 0.2);
+}
+
+.checkbox-options {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem 1.25rem;
+  padding-top: 0.15rem;
+}
+
+.checkbox-options .field {
+  align-items: center;
+  margin: 0;
+}
+
+.checkbox-options label {
+  cursor: pointer;
 }
 
 .grid-form {

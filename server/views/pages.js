@@ -3,7 +3,6 @@ const { publicDir } = require("../config/paths");
 
 const PAGE_MAP = {
   "/": "index.html",
-  "/menu": "menu.html",
   "/orders": "orders.html",
   "/feedback": "feedback.html",
   "/admin": "admin.html",

@@ -32,6 +32,9 @@ function htmlRedirect(req, res, next) {
   if (name === "index") {
     return res.redirect(301, `/${qs}`);
   }
+  if (name === "menu") {
+    return res.redirect(301, `/${qs}#menu`);
+  }
   if (name === "creations") {
     return res.redirect(301, `/${qs}#menu`);
   }

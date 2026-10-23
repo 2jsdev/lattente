@@ -20,7 +20,6 @@ const productBody = z.object({
   image_url: z.string().trim().optional().nullable(),
   featured: boolFromForm.default(false),
   active: boolFromForm.default(true),
-  sort_order: numberFromForm.default(0),
 });
 
 const productUpdateBody = productBody.partial().extend({

@@ -182,6 +182,26 @@
     markActiveNav();
     updateCartBadge();
     setupCartDrawer();
+
+    document.querySelector("body.home-page .app-header .brand")?.addEventListener("click", (event) => {
+      event.preventDefault();
+      if (location.hash) {
+        history.pushState(null, "", `${location.pathname}${location.search}`);
+      }
+      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" });
+    });
+
+    document.querySelector("body.home-page [data-nav='menu']")?.addEventListener("click", (event) => {
+      event.preventDefault();
+      const menu = document.querySelector("#menu");
+      if (!menu) return;
+      if (location.hash !== "#menu") {
+        history.pushState(null, "", `${location.pathname}${location.search}#menu`);
+      }
+      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      menu.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+    });
   });
 
   window.addEventListener("lattente:cart", () => {

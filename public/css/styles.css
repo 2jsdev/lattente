@@ -34,6 +34,36 @@ html {
   scroll-behavior: smooth;
 }
 
+@view-transition {
+  navigation: auto;
+}
+
+::view-transition-old(root) {
+  animation: page-transition-out 140ms ease both;
+}
+
+::view-transition-new(root) {
+  animation: page-transition-in 260ms var(--ease-out) both;
+}
+
+@keyframes page-transition-out {
+  to {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+}
+
+@keyframes page-transition-in {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 body {
   margin: 0;
   min-height: 100vh;
@@ -560,6 +590,40 @@ body.home-page .hero-content {
   color: var(--chocolate-soft);
 }
 
+.menu-search-empty {
+  display: grid;
+  justify-items: start;
+  gap: 0.55rem;
+  max-width: 46rem;
+  padding: clamp(1.25rem, 3vw, 2rem);
+  border: 1px dashed rgba(63, 42, 34, 0.22);
+  border-radius: 12px;
+  background: rgba(255, 253, 246, 0.72);
+  color: var(--chocolate-soft);
+}
+
+.menu-search-empty__icon {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  margin-bottom: 0.15rem;
+  border-radius: 50%;
+  background: rgba(63, 42, 34, 0.08);
+  color: var(--chocolate);
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.menu-search-empty strong {
+  color: var(--chocolate);
+}
+
+.menu-search-empty p {
+  margin: 0;
+  line-height: 1.5;
+}
+
 .category-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -590,6 +654,21 @@ body.home-page .hero-content {
   margin-top: 0.5rem;
 }
 
+.is-entering {
+  animation: menu-view-enter 300ms var(--ease-out) both;
+}
+
+@keyframes menu-view-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .category-detail[hidden],
 [data-menu-browse][hidden] {
   display: none !important;
@@ -613,6 +692,14 @@ body.home-page .hero-content {
 
 .category-detail .menu-list {
   grid-template-columns: 1fr;
+}
+
+.category-detail.is-search-results .menu-detail {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.category-detail.is-search-results .menu-visual {
+  display: none;
 }
 
 .category-tile img {
@@ -2670,6 +2757,11 @@ body.cart-open {
     animation: none !important;
     transition: none !important;
     scroll-behavior: auto !important;
+  }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none !important;
   }
 
   .product-card,
