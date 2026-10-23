@@ -9,7 +9,8 @@
       content="Conocé el menú de Lattente y encontrá tu café, chocolate o bebida favorita. Hacé tu pedido fácil y rápido."
     />
     <link rel="canonical" href="https://lattente.2jsdev.me/" />
-    <link rel="icon" type="image/png" href="/images/lattente-coffee-emblem.png" />
+    <link rel="icon" type="image/png" href="/images/lattente-icon.png" sizes="128x128" />
+    <link rel="preload" as="image" href="/images/lattente-logo.webp" fetchpriority="high" />
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="es_BO" />
     <meta property="og:site_name" content="Lattente" />
@@ -40,7 +41,7 @@
         "url": "https://lattente.2jsdev.me/",
         "image": [
           "https://lattente.2jsdev.me/images/lattente-og.jpg",
-          "https://lattente.2jsdev.me/images/lattente-coffee-emblem.png"
+          "https://lattente.2jsdev.me/images/lattente-icon.png"
         ],
         "email": "hola@lattente.bo",
         "address": {
@@ -64,7 +65,7 @@
   <body class="home-page">
     <header class="app-header">
       <a class="brand" href="/" data-nav="home" aria-label="Lattente — inicio">
-        <img src="/images/lattente-logo.png" alt="Lattente" />
+        <img src="/images/lattente-logo.webp" width="1440" height="480" alt="Lattente" fetchpriority="high" />
       </a>
       <nav class="header-nav" aria-label="Principal">
         <a href="#menu" data-nav="menu">Menú</a>
@@ -106,10 +107,9 @@
       <video
         class="hero-video is-active"
         data-hero-video
-        autoplay
         muted
         playsinline
-        preload="auto"
+        preload="metadata"
         poster="/images/hero-coffee-poster.jpg"
         aria-hidden="true"
         tabindex="-1"
@@ -121,7 +121,7 @@
         data-hero-video
         muted
         playsinline
-        preload="auto"
+        preload="none"
         poster="/images/hero-coffee-poster.jpg"
         aria-hidden="true"
         tabindex="-1"
@@ -130,7 +130,7 @@
       </video>
       <div class="hero-content">
         <h1 class="hero-title">
-          <img class="hero-logo" src="/images/lattente-logo.png" alt="Lattente" fetchpriority="high" />
+          <img class="hero-logo" src="/images/lattente-logo.webp" width="1440" height="480" alt="Lattente" fetchpriority="high" />
         </h1>
         <p class="hero-copy">
           Bienvenid@ a la página oficial de Lattente. Contamos con una gran
