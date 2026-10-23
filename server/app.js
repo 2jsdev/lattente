@@ -33,6 +33,13 @@ function createApp() {
     })
   );
 
+  // Keep JSON endpoints out of search results while allowing crawlers to
+  // fetch the public catalog when rendering the menu page.
+  app.use("/api", (req, res, next) => {
+    res.setHeader("X-Robots-Tag", "noindex");
+    next();
+  });
+
   app.use("/api", apiLimiter);
   app.use("/api/admin", adminRoutes);
   app.use("/api", publicRoutes);

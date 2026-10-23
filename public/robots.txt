@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /api/admin/
+Disallow: /api/health
+Disallow: /api/orders
+Disallow: /api/feedback
+
+Sitemap: https://lattente.2jsdev.me/sitemap.xml
