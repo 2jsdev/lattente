@@ -17,7 +17,13 @@ function parseTrustProxy(value) {
 
 const env = {
   nodeEnv: process.env.NODE_ENV || "development",
-  port: Number(process.env.PORT) || 3000,
+  // 3030 is the project's canonical port: the Dockerfile pins
+  // `ENV PORT=3030`, docker-compose maps 3030, the CI healthcheck probes
+  // 3030, and CapRover's HTTP Port must be 3030. The default MUST match
+  // them — a fallback to 3000 made the app listen on a different port than
+  // every healthcheck expected whenever PORT was unset (the .env is
+  // gitignored, so CI never has one).
+  port: Number(process.env.PORT) || 3030,
   host: process.env.HOST || "0.0.0.0",
   databaseUrl:
     process.env.DATABASE_URL ||

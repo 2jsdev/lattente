@@ -35,6 +35,12 @@ jobs:
     env:
       DATABASE_URL: postgresql://lattente:lattente@localhost:5432/lattente
       NODE_ENV: test
+      # PORT must match the Dockerfile's `ENV PORT=3030` and the healthcheck
+      # below. The app falls back to 3000 when PORT is unset (see
+      # server/config/env.js), and the .env is gitignored — so without this
+      # the app listens on 3000 while the healthcheck probes 3030 and the
+      # job fails with "App did not become healthy in time".
+      PORT: 3030
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

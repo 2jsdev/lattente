@@ -48,16 +48,35 @@ cada redespliegue borra las imágenes subidas.
 
 ## 2. Base de datos
 
-Copiá la app **PostgreSQL** de CapRover (una-click app) y configurá:
+Lattente usa el **Postgres compartido del cluster**, no una one-click app dedicada. Ese Postgres se
+alcanza por su **nombre de red interno de Docker Swarm**:
 
-| Variable | Valor |
-| --- | --- |
-| `POSTGRES_USER` | `lattente` |
-| `POSTGRES_PASSWORD` | *(una contraseña fuerte)* |
-| `POSTGRES_DB` | `lattente` |
+```
+srv-captain--postgresql:5432
+```
 
-No hace falta exponer el puerto al host — la app lo alcanza por la red
-interna de Docker usando el **nombre de la app** como host.
+Como la app `lattente` vive en ese mismo cluster, el nombre resuelve sin
+publicar puertos. La base `lattente` se crea **a mano** una sola vez, porque
+la migración del contenedor (`server/db/migrate.js`) aplica el schema y hace
+seed, pero nunca crea la base:
+
+```sql
+-- como superusuario del Postgres compartido
+CREATE ROLE lattente LOGIN PASSWORD '<contraseña fuerte>';
+CREATE DATABASE lattente OWNER lattente;
+```
+
+Después, la primera vez que arranque el contenedor la migración detecta el
+catálogo vacío y lo siembra sola. Para precargar el catálogo sin desplegar:
+
+```bash
+psql "postgresql://lattente:<password>@<host>:5432/lattente" -f db/schema.sql
+psql "postgresql://lattente:<password>@<host>:5432/lattente" -f db/seed.sql
+```
+
+> Si preferís un Postgres **dedicado** para Lattente, creá una one-click app
+> de PostgreSQL en el panel y usá su nombre de red como host en el
+> `DATABASE_URL` (en lugar de `srv-captain--postgresql`).
 
 ## 3. Variables de entorno de la app
 
@@ -67,7 +86,7 @@ En **App Config → Environment Variables**:
 | --- | --- | --- |
 | `NODE_ENV` | `production` | activa `trust proxy` por defecto |
 | `PORT` | `3030` | coincide con el HTTP Port del panel |
-| `DATABASE_URL` | `postgresql://lattente:<password>@lattente-db:5432/lattente` | `<password>` = la del paso 2, `<host>` = el nombre de la app de Postgres |
+| `DATABASE_URL` | `postgresql://lattente:<password>@srv-captain--postgresql:5432/lattente` | `<password>` = la del paso 2 |
 | `ADMIN_PASSWORD` | *(contraseña fuerte)* | **cambiá esto** |
 | `JWT_SECRET` | `openssl rand -hex 32` | **cambiá esto** |
 | `TRUST_PROXY` | `1` | 1 salto (nginx) |
