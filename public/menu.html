@@ -11,15 +11,10 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="/css/styles.css" />
+    <link rel="stylesheet" href="/css/site-footer.css" />
   </head>
   <body>
     <header class="app-header">
-      <a class="brand" href="/" data-nav="home">Lattente</a>
-      <nav class="header-nav" aria-label="Principal">
-        <a href="/menu" data-nav="menu">Menú</a>
-        <a href="/orders" data-nav="orders">Pedido</a>
-        <a href="/feedback" data-nav="feedback">Feedback</a>
-      </nav>
       <form class="hero-search" data-search role="search">
         <label class="hero-search__field">
           <span class="hero-search__icon" aria-hidden="true">
@@ -43,6 +38,14 @@
           </button>
         </label>
       </form>
+      <a class="brand" href="/" data-nav="home" aria-label="Lattente — inicio">
+        <img src="/images/lattente-logo.png" alt="Lattente" />
+      </a>
+      <nav class="header-nav" aria-label="Principal">
+          <a href="/#menu" data-nav="menu">Menú</a>
+        <a href="/orders" data-nav="orders">Pedido</a>
+        <a href="/feedback" data-nav="feedback">Feedback</a>
+      </nav>
       <div class="header-actions">
         <button class="cart-btn" type="button" data-open-cart aria-label="Carrito">
           🛒
@@ -103,5 +106,6 @@
     <script src="/js/app.js"></script>
     <script src="/js/product-media.js"></script>
     <script src="/js/menu.js"></script>
+    <script src="/js/site-footer.js"></script>
   </body>
 </html>

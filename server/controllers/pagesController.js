@@ -5,7 +5,8 @@ function home(req, res) {
 }
 
 function menu(req, res) {
-  renderPage(res, "/menu");
+  const query = queryString(req.url);
+  res.redirect(301, `/${query}#menu`);
 }
 
 function orders(req, res) {
@@ -21,7 +22,7 @@ function admin(req, res) {
 }
 
 function creationsRedirect(req, res) {
-  res.redirect(301, `/menu${queryString(req.url)}`);
+  res.redirect(301, `/${queryString(req.url)}#menu`);
 }
 
 function htmlRedirect(req, res, next) {
@@ -32,7 +33,7 @@ function htmlRedirect(req, res, next) {
     return res.redirect(301, `/${qs}`);
   }
   if (name === "creations") {
-    return res.redirect(301, `/menu${qs}`);
+    return res.redirect(301, `/${qs}#menu`);
   }
 
   const clean = `/${name}`;

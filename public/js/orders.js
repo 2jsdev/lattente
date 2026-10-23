@@ -140,7 +140,7 @@
       box.innerHTML = `
         <p class="order-empty">
           Tu carrito está vacío. Elegí productos a la izquierda o desde el
-          <a href="/menu">Menú</a>.
+          <a href="/#menu">Menú</a>.
         </p>`;
     } else {
       box.innerHTML = cart

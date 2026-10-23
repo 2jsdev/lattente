@@ -50,8 +50,8 @@ se configuran en *Settings → Secrets and variables → Actions*.
 
 | Ruta | Contenido |
 | --- | --- |
-| `/` | Home (portada) |
-| `/menu` | Menú por categorías (+ detalle con `?category=...`, búsqueda con `?q=...`) |
+| `/` | Portada. El menú de categorías va debajo del hero (`/#menu`, `/?category=...`, `/?q=...`) |
+| `/menu` | Redirige a `/#menu` |
 | `/orders` | Catálogo con búsqueda + resumen de pedido |
 | `/feedback` | Calificación del servicio |
 | `/admin` | CMS (productos, categorías, pedidos, feedback) |

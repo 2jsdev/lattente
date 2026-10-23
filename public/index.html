@@ -11,12 +11,15 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="/css/styles.css" />
+    <link rel="stylesheet" href="/css/site-footer.css" />
   </head>
   <body class="home-page">
     <header class="app-header">
-      <a class="brand" href="/" data-nav="home">Lattente</a>
+      <a class="brand" href="/" data-nav="home" aria-label="Lattente — inicio">
+        <img src="/images/lattente-logo.png" alt="Lattente" />
+      </a>
       <nav class="header-nav" aria-label="Principal">
-        <a href="/menu" data-nav="menu">Menú</a>
+        <a href="/#menu" data-nav="menu">Menú</a>
         <a href="/orders" data-nav="orders">Pedido</a>
         <a href="/feedback" data-nav="feedback">Feedback</a>
       </nav>
@@ -53,12 +56,42 @@
 
     <section class="hero">
       <div class="hero-content">
-        <h1 class="hero-title">Lattente</h1>
+        <h1 class="hero-title">
+          <img class="hero-logo" src="/images/lattente-logo.png" alt="Lattente" fetchpriority="high" />
+        </h1>
         <p class="hero-copy">
           Bienvenid@ a la página oficial de Lattente. Contamos con una gran
           variedad de productos de tu agrado listos a un solo click.
         </p>
-        <a class="hero-link" href="/menu">Menú principal ›</a>
+        <a class="hero-link" href="#menu">Menú principal ›</a>
+      </div>
+    </section>
+
+    <section class="menu-shell" id="menu">
+      <div class="menu-toolbar">
+        <div>
+          <h2>Menú</h2>
+          <p class="menu-lead">Elige una categoría para ver sus productos y agregarlos al pedido.</p>
+        </div>
+      </div>
+
+      <div data-menu-browse>
+        <div class="menu-filters" data-menu-filters role="tablist" aria-label="Filtrar menú"></div>
+        <div class="category-grid" data-category-grid></div>
+      </div>
+
+      <div class="category-detail" data-category-detail hidden>
+        <button type="button" class="back-cats" data-back-categories>← Todas las categorías</button>
+        <div class="section-title-row">
+          <h3 class="section-title serif" data-detail-title></h3>
+        </div>
+        <hr class="section-rule" />
+        <div class="menu-detail">
+          <div class="menu-list" data-detail-list></div>
+          <figure class="menu-visual">
+            <img data-detail-image src="" alt="" />
+          </figure>
+        </div>
       </div>
     </section>
 
@@ -84,6 +117,8 @@
 
     <script src="/js/cart.js"></script>
     <script src="/js/app.js"></script>
-    <script src="/js/home.js"></script>
+    <script src="/js/product-media.js"></script>
+    <script src="/js/menu.js"></script>
+    <script src="/js/site-footer.js"></script>
   </body>
 </html>

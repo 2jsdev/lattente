@@ -24,7 +24,9 @@
     const detail = detailEl();
     if (browse) browse.hidden = false;
     if (detail) detail.hidden = true;
-    history.replaceState(null, "", "/menu");
+    if (location.search) {
+      history.replaceState(null, "", `${location.pathname}#menu`);
+    }
   }
 
   function showDetail() {
@@ -32,7 +34,7 @@
     const detail = detailEl();
     if (browse) browse.hidden = true;
     if (detail) detail.hidden = false;
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    document.querySelector("#menu")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   function renderFilters() {
@@ -113,7 +115,7 @@
         }
       }
 
-      history.replaceState(null, "", `/menu?category=${encodeURIComponent(slug)}`);
+      history.replaceState(null, "", `/?category=${encodeURIComponent(slug)}#menu`);
       showDetail();
     } catch (err) {
       showToast(err.message, "error");
@@ -164,7 +166,7 @@
         }
       }
 
-      history.replaceState(null, "", `/menu?q=${encodeURIComponent(q)}`);
+      history.replaceState(null, "", `/?q=${encodeURIComponent(q)}#menu`);
       showDetail();
     } catch (err) {
       showToast(err.message, "error");
@@ -219,7 +221,7 @@
 
     document.querySelector("[data-back-categories]")?.addEventListener("click", () => {
       showBrowse();
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      document.querySelector("#menu")?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
 
     window.LattenteMedia.bindGalleries(document.querySelector("[data-detail-list]") || document);
