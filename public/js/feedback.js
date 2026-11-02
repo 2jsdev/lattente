@@ -1,31 +1,25 @@
-(function () {
-  document.addEventListener("DOMContentLoaded", () => {
-    document
-      .querySelector("[data-feedback-form]")
-      ?.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const { api, showToast } = window.Lattente;
-        const form = e.currentTarget;
-        const submit = form.querySelector('[type="submit"]');
-        const fd = new FormData(form);
+// Sección "Feedback": envía la calificación del cliente (POST /api/feedback)
+document.querySelector("[data-feedback-form]").addEventListener("submit", enviarFeedback);
 
-        submit.disabled = true;
-        try {
-          await api("/api/feedback", {
-            method: "POST",
-            body: JSON.stringify({
-              email: fd.get("email"),
-              rating: Number(fd.get("rating")),
-              comment: fd.get("comment") || "",
-            }),
-          });
-          form.reset();
-          showToast("¡Gracias por tu calificación!");
-        } catch (err) {
-          showToast(err.message, "error");
-        } finally {
-          submit.disabled = false;
-        }
-      });
-  });
-})();
+async function enviarFeedback(evento) {
+  evento.preventDefault();
+  const form = evento.currentTarget;
+  const submit = form.querySelector("[type='submit']");
+
+  const feedback = {
+    email: form.elements.email.value.trim(),
+    rating: Number(form.elements.rating.value),
+    comment: form.elements.comment.value.trim(),
+  };
+
+  submit.disabled = true;
+  try {
+    await api("/api/feedback", { method: "POST", body: JSON.stringify(feedback) });
+    form.reset();
+    showToast("¡Gracias por tu calificación!");
+  } catch (error) {
+    showToast(error.message, "error");
+  } finally {
+    submit.disabled = false;
+  }
+}

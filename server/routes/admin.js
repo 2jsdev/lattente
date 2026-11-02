@@ -32,14 +32,6 @@ function siNo(valor) {
   return valor === true || valor === 'true' || valor === 'on' || valor === '1' ? 1 : 0;
 }
 
-function crearSlug(texto) {
-  return String(texto)
-    .normalize('NFD').replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '');
-}
-
 // Lista de fotos = las URLs escritas en el formulario + las fotos subidas
 function listaDeFotos(body, archivos) {
   const escritas = String(body.images || body.image_url || '')
@@ -75,8 +67,6 @@ routes.use((req, res, next) => {
   }
   next();
 });
-
-routes.get('/me', (req, res) => res.json({ ok: true, role: 'admin' }));
 
 // ================= PRODUCTOS =================
 routes.get('/products', async (req, res) => {
@@ -170,8 +160,8 @@ routes.get('/categories', async (req, res) => {
 
 routes.post('/categories', subir.single('photo'), async (req, res) => {
   const { name, slug, menu_group, sort_order } = req.body;
-  if (!name) {
-    return res.status(400).json({ error: 'El nombre es obligatorio' });
+  if (!name || !slug) {
+    return res.status(400).json({ error: 'El nombre y el slug son obligatorios' });
   }
   const imagen = req.file ? '/uploads/' + req.file.filename : (req.body.image_url || null);
 
@@ -179,7 +169,7 @@ routes.post('/categories', subir.single('photo'), async (req, res) => {
     const [resultado] = await db.query(
       `INSERT INTO categories (slug, name, image_url, menu_group, show_on_home, sort_order)
        VALUES (?, ?, ?, ?, ?, ?)`,
-      [crearSlug(slug || name), name.trim(), imagen, menu_group || 'comida',
+      [slug.trim().toLowerCase(), name.trim(), imagen, menu_group || 'comida',
        siNo(req.body.show_on_home), Number(sort_order) || 0]
     );
     res.status(201).json({ ok: true, id: resultado.insertId });
@@ -194,13 +184,16 @@ routes.post('/categories', subir.single('photo'), async (req, res) => {
 
 routes.put('/categories/:id', subir.single('photo'), async (req, res) => {
   const { name, slug, menu_group, sort_order } = req.body;
+  if (!name || !slug) {
+    return res.status(400).json({ error: 'El nombre y el slug son obligatorios' });
+  }
   const imagen = req.file ? '/uploads/' + req.file.filename : (req.body.image_url || null);
 
   try {
     const [resultado] = await db.query(
       `UPDATE categories SET slug = ?, name = ?, image_url = ?, menu_group = ?, show_on_home = ?, sort_order = ?
        WHERE id = ?`,
-      [crearSlug(slug || name), name.trim(), imagen, menu_group || 'comida',
+      [slug.trim().toLowerCase(), name.trim(), imagen, menu_group || 'comida',
        siNo(req.body.show_on_home), Number(sort_order) || 0, req.params.id]
     );
     if (resultado.affectedRows === 0) {
@@ -275,30 +268,16 @@ routes.get('/feedback', async (req, res) => {
 });
 
 // ================= REDES SOCIALES =================
-routes.get('/site-settings/social-links', async (req, res) => {
-  try {
-    const [filas] = await db.query("SELECT value FROM site_settings WHERE setting_key = 'social_links'");
-    const links = filas.length ? JSON.parse(filas[0].value) : {};
-    res.json({ instagram: '', facebook: '', tiktok: '', ...links });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al obtener las redes sociales' });
-  }
-});
-
-routes.put('/site-settings/social-links', async (req, res) => {
-  const links = {
-    instagram: req.body.instagram || '',
-    facebook: req.body.facebook || '',
-    tiktok: req.body.tiktok || '',
-  };
+routes.put('/redes', async (req, res) => {
+  const instagram = req.body.instagram || '';
+  const facebook = req.body.facebook || '';
+  const tiktok = req.body.tiktok || '';
   try {
     await db.query(
-      `INSERT INTO site_settings (setting_key, value) VALUES ('social_links', ?)
-       ON DUPLICATE KEY UPDATE value = VALUES(value)`,
-      [JSON.stringify(links)]
+      'UPDATE redes SET instagram = ?, facebook = ?, tiktok = ? WHERE id = 1',
+      [instagram, facebook, tiktok]
     );
-    res.json(links);
+    res.json({ instagram, facebook, tiktok });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al guardar las redes sociales' });

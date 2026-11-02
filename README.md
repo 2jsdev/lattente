@@ -89,7 +89,7 @@ El archivo [`db/lattente.sql`](db/lattente.sql) crea la base `lattente`, sus
 4. Apretar **F9** (o el botón ▶ *Ejecutar*) para correr **todo** el script.
 5. Clic derecho en el panel izquierdo → **Actualizar** (o **F5**).
    Debe aparecer la base **`lattente`** con estas tablas:
-   `categories`, `feedback`, `order_items`, `orders`, `products`, `site_settings`.
+   `categories`, `feedback`, `order_items`, `orders`, `products`, `redes`.
 
 > Si ves letras raras (por ejemplo `CafÃ©` en vez de `Café`), vuelve a cargar
 > el archivo y, en el diálogo de abrir, elige la codificación **UTF-8**.
@@ -192,8 +192,22 @@ Abrir **<http://localhost:3030/admin>** y escribir la contraseña
 lattente/
 ├── db/
 │   └── lattente.sql        ← tablas + datos (importar en HeidiSQL)
-├── public/                 ← páginas HTML, CSS, JS e imágenes
-│   └── uploads/            ← fotos que se suben desde el admin
+├── public/
+│   ├── index.html          ← página pública (menú, pedido, feedback)
+│   ├── admin.html          ← panel de administración
+│   ├── css/                ← estilos
+│   ├── images/, videos/    ← logo, portada, etc.
+│   ├── uploads/            ← fotos que se suben desde el admin
+│   └── js/
+│       ├── utils.js        ← escapeHtml(), urlSegura() y api() (fetch); lo usan todos
+│       ├── cart.js         ← carrito guardado en el navegador (localStorage)
+│       ├── app.js          ← avisos, carrito lateral, navegación, video de portada
+│       ├── product-media.js← fotos de productos y galería con zoom
+│       ├── menu.js         ← categorías, productos y buscador
+│       ├── orders.js       ← catálogo y envío del pedido
+│       ├── feedback.js     ← envío de calificaciones
+│       ├── site-footer.js  ← redes sociales del pie de página
+│       └── admin.js        ← todo el panel de administración
 └── server/
     ├── index.js            ← arranca Express (puerto 3030)
     ├── conexion.js         ← conexión a MySQL (usuario, contraseña, base)
@@ -230,7 +244,7 @@ Todo está escrito directamente en el código (no hay archivo `.env`):
 | `orders` | Pedidos de los clientes |
 | `order_items` | Productos de cada pedido |
 | `feedback` | Calificaciones (1 a 5) y comentarios |
-| `site_settings` | Links de redes sociales |
+| `redes` | Links de redes sociales (una sola fila) |
 
 ## API
 
@@ -241,13 +255,13 @@ Todo está escrito directamente en el código (no hay archivo `.env`):
 | GET | `/api/products` | Productos activos (`?featured=true`, `?category=slug`) |
 | POST | `/api/orders` | Crear un pedido |
 | POST | `/api/feedback` | Enviar una calificación |
-| GET | `/api/site-settings/social-links` | Links de redes sociales (footer) |
+| GET | `/api/redes` | Links de redes sociales (footer y admin) |
 | POST | `/api/admin/login` | Iniciar sesión del admin |
 | GET/POST/PUT/DELETE | `/api/admin/products` | CRUD de productos |
 | GET/POST/PUT/DELETE | `/api/admin/categories` | CRUD de categorías |
 | GET / PATCH | `/api/admin/orders` | Ver pedidos / cambiar estado |
 | GET | `/api/admin/feedback` | Ver feedback |
-| GET / PUT | `/api/admin/site-settings/social-links` | Ver / cambiar redes sociales |
+| PUT | `/api/admin/redes` | Cambiar redes sociales |
 
 Para probar la API sin el navegador, abre por ejemplo
 <http://localhost:3030/api/categories>: debe mostrar la lista en JSON.

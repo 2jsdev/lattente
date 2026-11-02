@@ -1,360 +1,317 @@
-(function () {
-  const GROUP_LABELS = {
-    todos: "Todos",
-    calientes: "Calientes",
-    frias: "Frías",
-    comida: "Comida",
-    extras: "Extras",
-    creaciones: "Creaciones",
-  };
+// Sección "Menú": categorías, productos de cada categoría y buscador
+const GROUP_LABELS = {
+  todos: "Todos",
+  calientes: "Calientes",
+  frias: "Frías",
+  comida: "Comida",
+  extras: "Extras",
+  creaciones: "Creaciones",
+};
 
-  let allCategories = [];
-  let activeGroup = "todos";
-  let searchIndexPromise = null;
-  let searchTimer = null;
-  let searchGeneration = 0;
+let allCategories = [];
+let activeGroup = "todos";
+let searchData = null; // productos y categorías para buscar (se piden una sola vez)
+let searchTimer = null;
+let searchGeneration = 0; // sirve para ignorar búsquedas viejas si el usuario sigue escribiendo
 
-  function escapeHtml(value) {
-    return String(value ?? "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#39;");
+// "Cafés Fríos" -> "cafes frios" (sin tildes ni mayúsculas, para comparar)
+function normalizeSearch(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/\bcaffe\b/g, "cafe")
+    .replace(/\bcoffee\b/g, "cafe")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function cancelPendingSearch() {
+  clearTimeout(searchTimer);
+  searchGeneration += 1;
+}
+
+// Espera un poco a que el usuario termine de escribir antes de buscar
+function queueSearch(query, delay = 260) {
+  cancelPendingSearch();
+  const generation = searchGeneration;
+  const value = String(query || "").trim();
+  if (!value) {
+    showBrowse();
+    return;
   }
+  searchTimer = setTimeout(() => showSearchResults(value, generation), delay);
+}
 
-  function safeImageUrl(value) {
-    const raw = String(value || "").trim();
-    if (!raw) return "";
-    try {
-      const url = new URL(raw, window.location.origin);
-      return url.protocol === "http:" || url.protocol === "https:" ? url.href : "";
-    } catch {
-      return "";
-    }
+async function getSearchData() {
+  if (searchData) return searchData;
+  const [products, categories] = await Promise.all([
+    api("/api/products"),
+    api("/api/categories"),
+  ]);
+  searchData = { products, categories };
+  return searchData;
+}
+
+function browseEl() {
+  return document.querySelector("[data-menu-browse]");
+}
+
+function detailEl() {
+  return document.querySelector("[data-category-detail]");
+}
+
+function scrollToMenu() {
+  const menu = document.querySelector("#menu");
+  if (menu) menu.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+// Reinicia la animación de entrada (clase CSS "is-entering")
+function animateMenuView(element) {
+  if (!element || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  element.classList.remove("is-entering");
+  void element.offsetWidth; // obliga al navegador a "olvidar" la animación anterior
+  element.classList.add("is-entering");
+  element.addEventListener("animationend", () => element.classList.remove("is-entering"), { once: true });
+}
+
+// Muestra la grilla de categorías
+function showBrowse(animate = true) {
+  cancelPendingSearch();
+  const browse = browseEl();
+  const detail = detailEl();
+  if (browse) browse.hidden = false;
+  if (detail) detail.hidden = true;
+  if (animate) animateMenuView(browse);
+  if (location.search) {
+    history.replaceState(null, "", `${location.pathname}#menu`);
   }
+}
 
-  function normalizeSearch(value) {
-    return String(value || "")
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase()
-      .replace(/\bcaffe\b/g, "cafe")
-      .replace(/\bcoffee\b/g, "cafe")
-      .replace(/[^a-z0-9]+/g, " ")
-      .trim();
-  }
+// Muestra la lista de productos (de una categoría o de una búsqueda)
+function showDetail() {
+  const browse = browseEl();
+  const detail = detailEl();
+  if (browse) browse.hidden = true;
+  if (detail) detail.hidden = false;
+  animateMenuView(detail);
+  scrollToMenu();
+}
 
-  function cancelPendingSearch() {
-    clearTimeout(searchTimer);
-    searchTimer = null;
-    searchGeneration += 1;
-  }
+// Botones de filtro: Todos, Calientes, Frías...
+function renderMenuFilters() {
+  const filters = document.querySelector("[data-menu-filters]");
+  if (!filters) return;
 
-  function queueSearch(query, delay = 260) {
-    clearTimeout(searchTimer);
-    searchTimer = null;
-    const generation = ++searchGeneration;
-    const value = String(query || "").trim();
-    if (!value) {
-      showBrowse();
-      return;
-    }
-    searchTimer = setTimeout(() => showSearchResults(value, generation), delay);
-  }
+  const groups = ["todos"];
+  allCategories.forEach((c) => {
+    if (!groups.includes(c.menu_group)) groups.push(c.menu_group);
+  });
 
-  function getSearchIndex(api) {
-    if (!searchIndexPromise) {
-      searchIndexPromise = Promise.all([api("/api/products"), api("/api/categories")])
-        .then(([products, categories]) => ({ products, categories }))
-        .catch((error) => {
-          searchIndexPromise = null;
-          throw error;
-        });
-    }
-    return searchIndexPromise;
-  }
-
-  function browseEl() {
-    return document.querySelector("[data-menu-browse]");
-  }
-
-  function detailEl() {
-    return document.querySelector("[data-category-detail]");
-  }
-
-  function animateMenuView(element) {
-    if (!element || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    element.classList.remove("is-entering");
-    void element.offsetWidth;
-    element.classList.add("is-entering");
-    element.addEventListener(
-      "animationend",
-      () => element.classList.remove("is-entering"),
-      { once: true }
-    );
-  }
-
-  function showBrowse(animate = true) {
-    cancelPendingSearch();
-    const browse = browseEl();
-    const detail = detailEl();
-    if (browse) browse.hidden = false;
-    if (detail) detail.hidden = true;
-    if (animate) animateMenuView(browse);
-    if (location.search) {
-      history.replaceState(null, "", `${location.pathname}#menu`);
-    }
-  }
-
-  function showDetail(animate = true) {
-    const browse = browseEl();
-    const detail = detailEl();
-    if (browse) browse.hidden = true;
-    if (detail) detail.hidden = false;
-    if (animate) animateMenuView(detail);
-    document.querySelector("#menu")?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
-
-  function renderFilters() {
-    const filters = document.querySelector("[data-menu-filters]");
-    if (!filters) return;
-
-    const groups = ["todos", ...new Set(allCategories.map((c) => c.menu_group))];
-    filters.innerHTML = groups
-      .map(
-        (g) => `
-      <button type="button" class="menu-chip${g === activeGroup ? " is-active" : ""}" data-group="${escapeHtml(g)}" aria-pressed="${g === activeGroup}">
+  filters.innerHTML = "";
+  groups.forEach((g) => {
+    const active = g === activeGroup;
+    filters.innerHTML += `
+      <button type="button" class="menu-chip${active ? " is-active" : ""}" data-group="${escapeHtml(g)}" aria-pressed="${active}">
         ${escapeHtml(GROUP_LABELS[g] || g)}
-      </button>`
-      )
-      .join("");
+      </button>`;
+  });
+}
+
+// Grilla de categorías del filtro elegido
+function renderGrid() {
+  const grid = document.querySelector("[data-category-grid]");
+  if (!grid) return;
+
+  const list = activeGroup === "todos"
+    ? allCategories
+    : allCategories.filter((c) => c.menu_group === activeGroup);
+
+  if (list.length === 0) {
+    grid.innerHTML = `<p class="menu-empty">No hay categorías en este filtro.</p>`;
+    return;
   }
 
-  function renderGrid() {
-    const grid = document.querySelector("[data-category-grid]");
-    if (!grid) return;
-
-    const list =
-      activeGroup === "todos"
-        ? allCategories
-        : allCategories.filter((c) => c.menu_group === activeGroup);
-
-    if (!list.length) {
-      grid.innerHTML = `<p class="menu-empty">No hay categorías en este filtro.</p>`;
-      return;
-    }
-
-    grid.innerHTML = list
-      .map(
-        (cat, i) => `
+  grid.innerHTML = "";
+  list.forEach((cat, i) => {
+    grid.innerHTML += `
       <button type="button" class="category-tile" data-open-category="${escapeHtml(cat.slug)}" style="animation-delay:${Math.min(i, 12) * 35}ms">
-        <img src="${escapeHtml(safeImageUrl(cat.image_url))}" alt="" loading="lazy" />
+        <img src="${escapeHtml(urlSegura(cat.image_url))}" alt="" loading="lazy" />
         <h2>${escapeHtml(cat.name)}</h2>
-      </button>`
-      )
-      .join("");
-  }
+      </button>`;
+  });
+}
 
-  async function openCategory(slug) {
-    cancelPendingSearch();
-    const { api, showToast } = window.Lattente;
-    const { formatPrice } = window.LattenteCart;
+// HTML de una tarjeta de producto del menú
+function menuItemHtml(p, i, description) {
+  return `
+    <article class="menu-item" style="animation-delay:${i * 40}ms">
+      ${renderProductPhotos(p)}
+      <div class="menu-item-body">
+        <h3>${escapeHtml(p.name)}</h3>
+        <p>${escapeHtml(description)}</p>
+        <p class="price">${escapeHtml(formatPrice(p.price, p.currency))}</p>
+      </div>
+      <button class="add" type="button" data-id="${escapeHtml(p.id)}" data-name="${escapeHtml(p.name)}" data-price="${escapeHtml(p.price)}" data-currency="${escapeHtml(p.currency)}" aria-label="Agregar ${escapeHtml(p.name)}">+</button>
+    </article>`;
+}
 
-    try {
-      const data = await api(`/api/categories/${encodeURIComponent(slug)}`);
-      const title = document.querySelector("[data-detail-title]");
-      const image = document.querySelector("[data-detail-image]");
-      const list = document.querySelector("[data-detail-list]");
-      detailEl()?.classList.remove("is-search-results");
+// Abre una categoría: GET /api/categories/:slug (trae la categoría con sus productos)
+async function openCategory(slug) {
+  cancelPendingSearch();
+  try {
+    const categoria = await api(`/api/categories/${encodeURIComponent(slug)}`);
+    const title = document.querySelector("[data-detail-title]");
+    const image = document.querySelector("[data-detail-image]");
+    const list = document.querySelector("[data-detail-list]");
+    detailEl().classList.remove("is-search-results");
 
-      if (title) title.textContent = data.name;
-      if (image) {
-        image.src = safeImageUrl(data.image_url);
-        image.alt = String(data.name || "");
-      }
+    title.textContent = categoria.name;
+    image.src = urlSegura(categoria.image_url);
+    image.alt = categoria.name;
 
-      if (list) {
-        if (!data.products?.length) {
-          list.innerHTML = `<p class="menu-empty">Esta categoría aún no tiene productos.</p>`;
-        } else {
-          const { renderProductPhotos } = window.LattenteMedia;
-          list.innerHTML = data.products
-            .map(
-              (p, i) => `
-            <article class="menu-item" style="animation-delay:${i * 40}ms">
-              ${renderProductPhotos(p)}
-              <div class="menu-item-body">
-                <h3>${escapeHtml(p.name)}</h3>
-                <p>${escapeHtml(p.description || "")}</p>
-                <p class="price">${escapeHtml(formatPrice(p.price, p.currency))}</p>
-              </div>
-              <button class="add" type="button" data-id="${escapeHtml(p.id)}" data-name="${escapeHtml(p.name)}" data-price="${escapeHtml(p.price)}" data-currency="${escapeHtml(p.currency)}" aria-label="Agregar ${escapeHtml(p.name)}">+</button>
-            </article>`
-            )
-            .join("");
-        }
-      }
-
-      history.replaceState(null, "", `/?category=${encodeURIComponent(slug)}#menu`);
-      showDetail();
-    } catch (err) {
-      showToast(err.message, "error");
+    if (categoria.products.length === 0) {
+      list.innerHTML = `<p class="menu-empty">Esta categoría aún no tiene productos.</p>`;
+    } else {
+      list.innerHTML = "";
+      categoria.products.forEach((p, i) => {
+        list.innerHTML += menuItemHtml(p, i, p.description || "");
+      });
     }
+
+    history.replaceState(null, "", `/?category=${encodeURIComponent(slug)}#menu`);
+    showDetail();
+  } catch (error) {
+    showToast(error.message, "error");
+  }
+}
+
+// Busca en productos y categorías y muestra los resultados
+async function showSearchResults(q, generation = searchGeneration) {
+  const needle = normalizeSearch(q);
+  if (!needle) {
+    showBrowse(false);
+    return;
   }
 
-  async function showSearchResults(q, generation = ++searchGeneration) {
-    const { api, showToast } = window.Lattente;
-    const { formatPrice } = window.LattenteCart;
+  try {
+    const { products, categories } = await getSearchData();
+    if (generation !== searchGeneration) return; // el usuario ya escribió otra cosa
+
+    // Categorías cuyo nombre coincide: se muestran todos sus productos
+    const matchingSlugs = categories
+      .filter((c) => normalizeSearch(`${c.name} ${c.slug} ${c.menu_group}`).includes(needle))
+      .map((c) => c.slug);
+
+    const matches = products.filter((p) => {
+      const texto = normalizeSearch(`${p.name} ${p.description || ""} ${p.category_name} ${p.category_slug}`);
+      return texto.includes(needle) || matchingSlugs.includes(p.category_slug);
+    });
+
     const title = document.querySelector("[data-detail-title]");
     const list = document.querySelector("[data-detail-list]");
-    const detail = detailEl();
-    const needle = normalizeSearch(q);
-    if (!needle) {
-      showBrowse(false);
-      return;
-    }
+    detailEl().classList.add("is-search-results");
 
-    try {
-      const { products, categories } = await getSearchIndex(api);
-      if (generation !== searchGeneration) return;
-      const matchingCategories = categories.filter((category) =>
-        [category.name, category.slug, category.menu_group]
-          .map(normalizeSearch)
-          .some((value) => value.includes(needle))
-      );
-      const matchingSlugs = new Set(matchingCategories.map((category) => category.slug));
-      const matches = products.filter((product) => {
-        const searchable = [
-          product.name,
-          product.description,
-          product.category_name,
-          product.category_slug,
-        ]
-          .map(normalizeSearch)
-          .join(" ");
-        return searchable.includes(needle) || matchingSlugs.has(product.category_slug);
-      });
-
-      detail?.classList.add("is-search-results");
-      if (title) {
-        title.textContent = matches.length
-          ? `${matches.length} ${matches.length === 1 ? "producto" : "productos"} para “${q}”`
-          : `Resultados para “${q}”`;
-      }
-
-      if (list) {
-        if (!matches.length) {
-          list.innerHTML = `
-            <div class="menu-search-empty">
-              <span class="menu-search-empty__icon" aria-hidden="true">⌕</span>
-              <strong>No encontramos productos con esa búsqueda</strong>
-              <p>Probá con otro nombre o buscá una categoría, como “café” o “blends”.</p>
-            </div>`;
-        } else {
-          const { renderProductPhotos } = window.LattenteMedia;
-          list.innerHTML = matches
-            .map(
-              (p, i) => `
-            <article class="menu-item" style="animation-delay:${i * 40}ms">
-              ${renderProductPhotos(p)}
-              <div class="menu-item-body">
-                <h3>${escapeHtml(p.name)}</h3>
-                <p>${escapeHtml(p.description || p.category_name || "")}</p>
-                <p class="price">${escapeHtml(formatPrice(p.price, p.currency))}</p>
-              </div>
-              <button class="add" type="button" data-id="${escapeHtml(p.id)}" data-name="${escapeHtml(p.name)}" data-price="${escapeHtml(p.price)}" data-currency="${escapeHtml(p.currency)}" aria-label="Agregar ${escapeHtml(p.name)}">+</button>
-            </article>`
-            )
-            .join("");
-        }
-      }
-
-      history.replaceState(null, "", `/?q=${encodeURIComponent(q)}#menu`);
-      showDetail();
-    } catch (err) {
-      if (generation === searchGeneration) showToast(err.message, "error");
-    }
-  }
-
-  async function loadMenu() {
-    const { api } = window.Lattente;
-    allCategories = await api("/api/categories?home=true");
-    renderFilters();
-    renderGrid();
-
-    const params = new URLSearchParams(location.search);
-    const q = params.get("q");
-    const slug = params.get("category");
-
-    if (q) {
-      await showSearchResults(q);
-      const input = document.querySelector("[data-search] input[name='q']");
-      if (input) input.value = q;
-    } else if (slug && allCategories.some((c) => c.slug === slug)) {
-      await openCategory(slug);
+    if (matches.length === 0) {
+      title.textContent = `Resultados para “${q}”`;
+      list.innerHTML = `
+        <div class="menu-search-empty">
+          <span class="menu-search-empty__icon" aria-hidden="true">⌕</span>
+          <strong>No encontramos productos con esa búsqueda</strong>
+          <p>Probá con otro nombre o buscá una categoría, como “café” o “blends”.</p>
+        </div>`;
     } else {
-      showBrowse(false);
-    }
-  }
-
-  document.addEventListener("DOMContentLoaded", async () => {
-    const { showToast } = window.Lattente;
-    const { addToCart } = window.LattenteCart;
-    if (document.body.classList.contains("home-page")) {
-      document.querySelector("[data-search] input[name='q']")?.addEventListener("focus", () => {
-        document.querySelector("#menu")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      title.textContent = `${matches.length} ${matches.length === 1 ? "producto" : "productos"} para “${q}”`;
+      list.innerHTML = "";
+      matches.forEach((p, i) => {
+        list.innerHTML += menuItemHtml(p, i, p.description || p.category_name || "");
       });
     }
 
-    try {
-      await loadMenu();
-    } catch (err) {
-      showToast(err.message, "error");
-    }
+    history.replaceState(null, "", `/?q=${encodeURIComponent(q)}#menu`);
+    showDetail();
+  } catch (error) {
+    if (generation === searchGeneration) showToast(error.message, "error");
+  }
+}
 
-    const searchForm = document.querySelector("[data-search]");
-    const searchInput = searchForm?.querySelector("input[name='q']");
-    searchInput?.addEventListener("input", (event) => queueSearch(event.currentTarget.value));
-    searchForm?.addEventListener("submit", (event) => {
-      event.preventDefault();
-      queueSearch(searchInput?.value || "", 0);
-    });
+// Carga las categorías y, si la URL trae ?q= o ?category=, abre eso directamente
+async function loadMenu() {
+  allCategories = await api("/api/categories?home=true");
+  renderMenuFilters();
+  renderGrid();
 
-    document.querySelector("[data-menu-filters]")?.addEventListener("click", (e) => {
-      const btn = e.target.closest("[data-group]");
-      if (!btn) return;
-      activeGroup = btn.dataset.group;
-      renderFilters();
-      renderGrid();
-      showBrowse();
-    });
+  const params = new URLSearchParams(location.search);
+  const q = params.get("q");
+  const slug = params.get("category");
 
-    document.querySelector("[data-category-grid]")?.addEventListener("click", (e) => {
-      const tile = e.target.closest("[data-open-category]");
-      if (!tile) return;
-      openCategory(tile.dataset.openCategory);
-    });
+  if (q) {
+    const input = document.querySelector("[data-search] input[name='q']");
+    if (input) input.value = q;
+    await showSearchResults(q);
+  } else if (slug && allCategories.some((c) => c.slug === slug)) {
+    await openCategory(slug);
+  } else {
+    showBrowse(false);
+  }
+}
 
-    document.querySelector("[data-back-categories]")?.addEventListener("click", () => {
-      showBrowse();
-      document.querySelector("#menu")?.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
+document.addEventListener("DOMContentLoaded", async () => {
+  const searchForm = document.querySelector("[data-search]");
+  const searchInput = document.querySelector("[data-search] input[name='q']");
+  const filters = document.querySelector("[data-menu-filters]");
+  const grid = document.querySelector("[data-category-grid]");
+  const backButton = document.querySelector("[data-back-categories]");
+  const detailList = document.querySelector("[data-detail-list]");
 
-    window.LattenteMedia.bindGalleries(document.querySelector("[data-detail-list]") || document);
+  try {
+    await loadMenu();
+  } catch (error) {
+    showToast(error.message, "error");
+  }
 
-    document.querySelector("[data-detail-list]")?.addEventListener("click", (e) => {
-      const btn = e.target.closest("button.add[data-id]");
-      if (!btn) return;
-      const product = {
-        id: Number(btn.dataset.id),
-        name: btn.dataset.name,
-        price: Number(btn.dataset.price),
-        currency: btn.dataset.currency,
-      };
-      addToCart(product);
-      showToast(`${product.name} agregado al carrito`);
-    });
-
+  // Buscador de arriba
+  searchInput.addEventListener("focus", scrollToMenu);
+  searchInput.addEventListener("input", () => queueSearch(searchInput.value));
+  searchForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    queueSearch(searchInput.value, 0);
   });
-})();
+
+  // Clic en un filtro
+  filters.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-group]");
+    if (!btn) return;
+    activeGroup = btn.dataset.group;
+    renderMenuFilters();
+    renderGrid();
+    showBrowse();
+  });
+
+  // Clic en una categoría
+  grid.addEventListener("click", (e) => {
+    const tile = e.target.closest("[data-open-category]");
+    if (tile) openCategory(tile.dataset.openCategory);
+  });
+
+  // Volver a las categorías
+  backButton.addEventListener("click", () => {
+    showBrowse();
+    scrollToMenu();
+  });
+
+  // Fotos y botón "+" de cada producto
+  bindGalleries(detailList);
+  detailList.addEventListener("click", (e) => {
+    const btn = e.target.closest("button.add[data-id]");
+    if (!btn) return;
+    const product = {
+      id: Number(btn.dataset.id),
+      name: btn.dataset.name,
+      price: Number(btn.dataset.price),
+      currency: btn.dataset.currency,
+    };
+    addToCart(product);
+    showToast(`${product.name} agregado al carrito`);
+  });
+});

@@ -27,8 +27,7 @@
         </form>
         <p class="admin-login-hint">
           La contraseña se define en <code>ADMIN_PASSWORD</code> dentro de
-          <code>.env</code>. Si no la recordás, pedila a quien administra el
-          servidor.
+          <code>server/routes/admin.js</code>.
         </p>
       </div>
     </div>
@@ -231,6 +230,7 @@
     <div id="modal-root" class="modal-backdrop hidden"></div>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
+    <script src="/js/utils.js" defer></script>
     <script src="/js/admin.js" defer></script>
   </body>
 </html>

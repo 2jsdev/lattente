@@ -66,14 +66,15 @@ CREATE TABLE feedback (
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- Configuración del sitio (redes sociales)
-CREATE TABLE site_settings (
-  setting_key VARCHAR(50) PRIMARY KEY,
-  value TEXT NOT NULL
+-- Redes sociales del pie de página (una sola fila, id = 1)
+CREATE TABLE redes (
+  id INT PRIMARY KEY,
+  instagram VARCHAR(255) NOT NULL DEFAULT '',
+  facebook VARCHAR(255) NOT NULL DEFAULT '',
+  tiktok VARCHAR(255) NOT NULL DEFAULT ''
 );
 
-INSERT INTO site_settings (setting_key, value) VALUES
-  ('social_links', '{"instagram":"","facebook":"","tiktok":""}');
+INSERT INTO redes (id, instagram, facebook, tiktok) VALUES (1, '', '', '');
 
 -- ===================== DATOS =====================
 

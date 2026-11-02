@@ -159,12 +159,11 @@ routes.post('/feedback', async (req, res) => {
   }
 });
 
-// REDES SOCIALES (para el footer)
-routes.get('/site-settings/social-links', async (req, res) => {
+// VER REDES SOCIALES (para el footer)
+routes.get('/redes', async (req, res) => {
   try {
-    const [filas] = await db.query("SELECT value FROM site_settings WHERE setting_key = 'social_links'");
-    const links = filas.length ? JSON.parse(filas[0].value) : {};
-    res.json({ instagram: '', facebook: '', tiktok: '', ...links });
+    const [filas] = await db.query('SELECT instagram, facebook, tiktok FROM redes WHERE id = 1');
+    res.json(filas[0]);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al obtener las redes sociales' });
