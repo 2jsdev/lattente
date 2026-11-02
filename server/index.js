@@ -16,14 +16,8 @@ app.use(express.json());
 app.use('/api/admin', rutasAdmin);
 app.use('/api', rutasPublicas);
 
-// Páginas (URLs sin .html) — la parte pública vive en index
-app.get('/orders', (req, res) => res.redirect(301, '/#orders'));
-app.get('/feedback', (req, res) => res.redirect(301, '/#feedback'));
+// Panel de administración (sin .html en la URL)
 app.get('/admin', (req, res) => res.sendFile(path.join(carpetaPublic, 'admin.html')));
-app.get('/menu', (req, res) => res.redirect(301, '/#menu'));
-app.get('/orders.html', (req, res) => res.redirect(301, '/#orders'));
-app.get('/feedback.html', (req, res) => res.redirect(301, '/#feedback'));
-
 
 // Archivos estáticos: HTML, CSS, JS, imágenes y fotos subidas
 app.use(express.static(carpetaPublic));
