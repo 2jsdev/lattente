@@ -3,7 +3,7 @@ const express = require('express');
 const crypto = require('crypto');
 const path = require('path');
 const multer = require('multer');
-const db = require('../conexion');
+const pool = require('../conexion');
 
 const routes = express.Router();
 
@@ -14,6 +14,7 @@ const ADMIN_PASSWORD = 'lattente-admin';
 const sesiones = new Set();
 
 // ---------- SUBIDA DE FOTOS (multer) ----------
+// Guarda las fotos en public/uploads con un nombre único (fecha + número al azar)
 const almacen = multer.diskStorage({
   destination: path.join(__dirname, '..', '..', 'public', 'uploads'),
   filename: (req, file, cb) => {
@@ -28,25 +29,33 @@ const subir = multer({
 });
 
 // ---------- AYUDANTES ----------
+// Los checkbox llegan como texto: "true" / "on" -> 1, cualquier otra cosa -> 0
 function siNo(valor) {
   return valor === true || valor === 'true' || valor === 'on' || valor === '1' ? 1 : 0;
 }
 
-// Lista de fotos = las URLs escritas en el formulario + las fotos subidas
+// Lista de fotos = las URLs escritas en el formulario (una por línea) + las fotos subidas
 function listaDeFotos(body, archivos) {
-  const escritas = String(body.images || body.image_url || '')
-    .split('\n')
-    .map((url) => url.trim())
-    .filter(Boolean);
-  const subidas = (archivos || []).map((f) => '/uploads/' + f.filename);
-  return [...new Set([...escritas, ...subidas])];
+  const fotos = [];
+  String(body.images || body.image_url || '').split('\n').forEach((url) => {
+    const limpia = url.trim();
+    if (limpia && !fotos.includes(limpia)) fotos.push(limpia);
+  });
+  (archivos || []).forEach((archivo) => fotos.push('/uploads/' + archivo.filename));
+  return fotos;
 }
 
+// images se guarda como texto JSON en MySQL -> lo convertimos a lista
 function leerFotos(producto) {
   let images = [];
-  try { images = JSON.parse(producto.images || '[]'); } catch (e) { images = []; }
+  try {
+    images = JSON.parse(producto.images || '[]');
+  } catch (e) {
+    images = [];
+  }
   if (images.length === 0 && producto.image_url) images = [producto.image_url];
-  return { ...producto, images };
+  producto.images = images;
+  return producto;
 }
 
 // ---------- LOGIN ----------
@@ -69,219 +78,238 @@ routes.use((req, res, next) => {
 });
 
 // ================= PRODUCTOS =================
-routes.get('/products', async (req, res) => {
-  try {
-    const [filas] = await db.query(
-      `SELECT p.*, c.slug AS category_slug, c.name AS category_name
-       FROM products p
-       JOIN categories c ON c.id = p.category_id
-       ORDER BY c.sort_order, p.id`
-    );
-    res.json(filas.map(leerFotos));
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al obtener los productos' });
-  }
+// VER PRODUCTOS (también los inactivos)
+routes.get('/products', (req, res) => {
+  const sql = `SELECT p.*, c.slug AS category_slug, c.name AS category_name
+               FROM products p
+               JOIN categories c ON c.id = p.category_id
+               ORDER BY c.sort_order, p.id`;
+
+  pool.query(sql, (err, rows) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Error al obtener los productos' });
+    }
+    res.json(rows.map(leerFotos));
+  });
 });
 
-routes.post('/products', subir.array('photos', 8), async (req, res) => {
+// AGREGAR PRODUCTO (subir.array recibe hasta 8 fotos del campo "photos")
+routes.post('/products', subir.array('photos', 8), (req, res) => {
   const { category_id, name, description, price, currency } = req.body;
   if (!category_id || !name || price === undefined || price === '') {
     return res.status(400).json({ error: 'Categoría, nombre y precio son obligatorios' });
   }
   const fotos = listaDeFotos(req.body, req.files);
 
-  try {
-    const [resultado] = await db.query(
-      `INSERT INTO products (category_id, name, description, price, currency, image_url, images, featured, active)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [category_id, name.trim(), description || null, price, currency || 'Bs.',
-       fotos[0] || null, JSON.stringify(fotos), siNo(req.body.featured), siNo(req.body.active)]
-    );
+  const sql = `INSERT INTO products (category_id, name, description, price, currency, image_url, images, featured, active)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+  const valores = [category_id, name.trim(), description || null, price, currency || 'Bs.',
+    fotos[0] || null, JSON.stringify(fotos), siNo(req.body.featured), siNo(req.body.active)];
+
+  pool.query(sql, valores, (err, resultado) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Error al crear el producto' });
+    }
     res.status(201).json({ ok: true, id: resultado.insertId });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al crear el producto' });
-  }
+  });
 });
 
-routes.put('/products/:id', subir.array('photos', 8), async (req, res) => {
+// MODIFICAR PRODUCTO
+routes.put('/products/:id', subir.array('photos', 8), (req, res) => {
   const { category_id, name, description, price, currency } = req.body;
   const fotos = listaDeFotos(req.body, req.files);
 
-  try {
-    const [resultado] = await db.query(
-      `UPDATE products SET category_id = ?, name = ?, description = ?, price = ?, currency = ?,
-         image_url = ?, images = ?, featured = ?, active = ?
-       WHERE id = ?`,
-      [category_id, name.trim(), description || null, price, currency || 'Bs.',
-       fotos[0] || null, JSON.stringify(fotos), siNo(req.body.featured), siNo(req.body.active),
-       req.params.id]
-    );
+  const sql = `UPDATE products SET category_id = ?, name = ?, description = ?, price = ?, currency = ?,
+                 image_url = ?, images = ?, featured = ?, active = ?
+               WHERE id = ?`;
+  const valores = [category_id, name.trim(), description || null, price, currency || 'Bs.',
+    fotos[0] || null, JSON.stringify(fotos), siNo(req.body.featured), siNo(req.body.active),
+    req.params.id];
+
+  pool.query(sql, valores, (err, resultado) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Error al modificar el producto' });
+    }
     if (resultado.affectedRows === 0) {
       return res.status(404).json({ error: 'Producto no encontrado' });
     }
     res.json({ ok: true });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al modificar el producto' });
-  }
+  });
 });
 
-routes.delete('/products/:id', async (req, res) => {
-  try {
-    const [resultado] = await db.query('DELETE FROM products WHERE id = ?', [req.params.id]);
+// BORRAR PRODUCTO
+routes.delete('/products/:id', (req, res) => {
+  pool.query('DELETE FROM products WHERE id = ?', [req.params.id], (err, resultado) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Error al borrar el producto' });
+    }
     if (resultado.affectedRows === 0) {
       return res.status(404).json({ error: 'Producto no encontrado' });
     }
     res.json({ ok: true });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al borrar el producto' });
-  }
+  });
 });
 
 // ================= CATEGORÍAS =================
-routes.get('/categories', async (req, res) => {
-  try {
-    const [filas] = await db.query(
-      `SELECT c.*, COUNT(p.id) AS product_count
-       FROM categories c
-       LEFT JOIN products p ON p.category_id = c.id
-       GROUP BY c.id
-       ORDER BY c.sort_order, c.id`
-    );
-    res.json(filas);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al obtener las categorías' });
-  }
+// VER CATEGORÍAS (con cuántos productos tiene cada una)
+routes.get('/categories', (req, res) => {
+  const sql = `SELECT c.*, COUNT(p.id) AS product_count
+               FROM categories c
+               LEFT JOIN products p ON p.category_id = c.id
+               GROUP BY c.id
+               ORDER BY c.sort_order, c.id`;
+
+  pool.query(sql, (err, rows) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Error al obtener las categorías' });
+    }
+    res.json(rows);
+  });
 });
 
-routes.post('/categories', subir.single('photo'), async (req, res) => {
+// AGREGAR CATEGORÍA (subir.single recibe una foto del campo "photo")
+routes.post('/categories', subir.single('photo'), (req, res) => {
   const { name, slug, menu_group, sort_order } = req.body;
   if (!name || !slug) {
     return res.status(400).json({ error: 'El nombre y el slug son obligatorios' });
   }
   const imagen = req.file ? '/uploads/' + req.file.filename : (req.body.image_url || null);
 
-  try {
-    const [resultado] = await db.query(
-      `INSERT INTO categories (slug, name, image_url, menu_group, show_on_home, sort_order)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [slug.trim().toLowerCase(), name.trim(), imagen, menu_group || 'comida',
-       siNo(req.body.show_on_home), Number(sort_order) || 0]
-    );
+  const sql = `INSERT INTO categories (slug, name, image_url, menu_group, show_on_home, sort_order)
+               VALUES (?, ?, ?, ?, ?, ?)`;
+  const valores = [slug.trim().toLowerCase(), name.trim(), imagen, menu_group || 'comida',
+    siNo(req.body.show_on_home), Number(sort_order) || 0];
+
+  pool.query(sql, valores, (err, resultado) => {
+    if (err && err.code === 'ER_DUP_ENTRY') {
+      return res.status(409).json({ error: 'Ya existe una categoría con ese slug' });
+    }
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Error al crear la categoría' });
+    }
     res.status(201).json({ ok: true, id: resultado.insertId });
-  } catch (err) {
-    if (err.code === 'ER_DUP_ENTRY') {
-      return res.status(409).json({ error: 'Ya existe una categoría con ese slug' });
-    }
-    console.error(err);
-    res.status(500).json({ error: 'Error al crear la categoría' });
-  }
+  });
 });
 
-routes.put('/categories/:id', subir.single('photo'), async (req, res) => {
+// MODIFICAR CATEGORÍA
+routes.put('/categories/:id', subir.single('photo'), (req, res) => {
   const { name, slug, menu_group, sort_order } = req.body;
   if (!name || !slug) {
     return res.status(400).json({ error: 'El nombre y el slug son obligatorios' });
   }
   const imagen = req.file ? '/uploads/' + req.file.filename : (req.body.image_url || null);
 
-  try {
-    const [resultado] = await db.query(
-      `UPDATE categories SET slug = ?, name = ?, image_url = ?, menu_group = ?, show_on_home = ?, sort_order = ?
-       WHERE id = ?`,
-      [slug.trim().toLowerCase(), name.trim(), imagen, menu_group || 'comida',
-       siNo(req.body.show_on_home), Number(sort_order) || 0, req.params.id]
-    );
-    if (resultado.affectedRows === 0) {
-      return res.status(404).json({ error: 'Categoría no encontrada' });
-    }
-    res.json({ ok: true });
-  } catch (err) {
-    if (err.code === 'ER_DUP_ENTRY') {
+  const sql = `UPDATE categories SET slug = ?, name = ?, image_url = ?, menu_group = ?, show_on_home = ?, sort_order = ?
+               WHERE id = ?`;
+  const valores = [slug.trim().toLowerCase(), name.trim(), imagen, menu_group || 'comida',
+    siNo(req.body.show_on_home), Number(sort_order) || 0, req.params.id];
+
+  pool.query(sql, valores, (err, resultado) => {
+    if (err && err.code === 'ER_DUP_ENTRY') {
       return res.status(409).json({ error: 'Ya existe una categoría con ese slug' });
     }
-    console.error(err);
-    res.status(500).json({ error: 'Error al modificar la categoría' });
-  }
-});
-
-routes.delete('/categories/:id', async (req, res) => {
-  try {
-    const [resultado] = await db.query('DELETE FROM categories WHERE id = ?', [req.params.id]);
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Error al modificar la categoría' });
+    }
     if (resultado.affectedRows === 0) {
       return res.status(404).json({ error: 'Categoría no encontrada' });
     }
     res.json({ ok: true });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al borrar la categoría' });
-  }
+  });
+});
+
+// BORRAR CATEGORÍA (también borra sus productos: ON DELETE CASCADE en la base)
+routes.delete('/categories/:id', (req, res) => {
+  pool.query('DELETE FROM categories WHERE id = ?', [req.params.id], (err, resultado) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Error al borrar la categoría' });
+    }
+    if (resultado.affectedRows === 0) {
+      return res.status(404).json({ error: 'Categoría no encontrada' });
+    }
+    res.json({ ok: true });
+  });
 });
 
 // ================= PEDIDOS =================
-routes.get('/orders', async (req, res) => {
-  try {
-    const [pedidos] = await db.query('SELECT * FROM orders ORDER BY created_at DESC LIMIT 100');
-    const [items] = await db.query('SELECT * FROM order_items ORDER BY id');
+// VER PEDIDOS (cada uno con su lista de productos)
+routes.get('/orders', (req, res) => {
+  pool.query('SELECT * FROM orders ORDER BY created_at DESC LIMIT 100', (err, pedidos) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Error al obtener los pedidos' });
+    }
 
-    // A cada pedido le ponemos su lista de productos
-    pedidos.forEach((pedido) => {
-      pedido.items = items.filter((item) => item.order_id === pedido.id);
+    pool.query('SELECT * FROM order_items ORDER BY id', (err, items) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ error: 'Error al obtener los pedidos' });
+      }
+
+      // A cada pedido le ponemos su lista de productos
+      pedidos.forEach((pedido) => {
+        pedido.items = items.filter((item) => item.order_id === pedido.id);
+      });
+      res.json(pedidos);
     });
-    res.json(pedidos);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al obtener los pedidos' });
-  }
+  });
 });
 
-routes.patch('/orders/:id', async (req, res) => {
+// CAMBIAR EL ESTADO DE UN PEDIDO
+routes.patch('/orders/:id', (req, res) => {
   const estados = ['pending', 'confirmed', 'done', 'cancelled'];
   if (!estados.includes(req.body.status)) {
     return res.status(400).json({ error: 'Estado inválido' });
   }
-  try {
-    const [resultado] = await db.query('UPDATE orders SET status = ? WHERE id = ?', [req.body.status, req.params.id]);
+
+  pool.query('UPDATE orders SET status = ? WHERE id = ?', [req.body.status, req.params.id], (err, resultado) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Error al actualizar el pedido' });
+    }
     if (resultado.affectedRows === 0) {
       return res.status(404).json({ error: 'Pedido no encontrado' });
     }
     res.json({ ok: true, status: req.body.status });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al actualizar el pedido' });
-  }
+  });
 });
 
 // ================= FEEDBACK =================
-routes.get('/feedback', async (req, res) => {
-  try {
-    const [filas] = await db.query('SELECT * FROM feedback ORDER BY created_at DESC LIMIT 100');
-    res.json(filas);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al obtener el feedback' });
-  }
+routes.get('/feedback', (req, res) => {
+  pool.query('SELECT * FROM feedback ORDER BY created_at DESC LIMIT 100', (err, rows) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Error al obtener el feedback' });
+    }
+    res.json(rows);
+  });
 });
 
 // ================= REDES SOCIALES =================
-routes.put('/redes', async (req, res) => {
+routes.put('/redes', (req, res) => {
   const instagram = req.body.instagram || '';
   const facebook = req.body.facebook || '';
   const tiktok = req.body.tiktok || '';
-  try {
-    await db.query(
-      'UPDATE redes SET instagram = ?, facebook = ?, tiktok = ? WHERE id = 1',
-      [instagram, facebook, tiktok]
-    );
-    res.json({ instagram, facebook, tiktok });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al guardar las redes sociales' });
-  }
+
+  pool.query(
+    'UPDATE redes SET instagram = ?, facebook = ?, tiktok = ? WHERE id = 1',
+    [instagram, facebook, tiktok],
+    (err) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ error: 'Error al guardar las redes sociales' });
+      }
+      res.json({ instagram, facebook, tiktok });
+    }
+  );
 });
 
 module.exports = routes;

@@ -21,5 +21,4 @@ pool.getConnection((err, conn) => {
   conn.release();
 });
 
-// Usamos la versión con promesas para poder escribir async/await
-module.exports = pool.promise();
+module.exports = pool;

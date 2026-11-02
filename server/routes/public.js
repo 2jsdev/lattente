@@ -1,6 +1,6 @@
 // Rutas públicas: menú, productos, pedidos y feedback
 const express = require('express');
-const db = require('../conexion');
+const pool = require('../conexion');
 
 const routes = express.Router();
 
@@ -13,81 +13,91 @@ function arreglarFotos(producto) {
     images = [];
   }
   if (images.length === 0 && producto.image_url) images = [producto.image_url];
-  return { ...producto, images, image_url: images[0] || null };
+  producto.images = images;
+  producto.image_url = images[0] || null;
+  return producto;
 }
 
 // VER CATEGORÍAS  (?home=true  ?group=frias)
-routes.get('/categories', async (req, res) => {
-  try {
-    let sql = 'SELECT * FROM categories WHERE 1=1';
-    const valores = [];
+routes.get('/categories', (req, res) => {
+  let sql = 'SELECT * FROM categories WHERE 1=1';
+  const valores = [];
 
-    if (req.query.home === 'true') {
-      sql += ' AND show_on_home = 1';
-    }
-    if (req.query.group && req.query.group !== 'todos') {
-      sql += ' AND menu_group = ?';
-      valores.push(req.query.group);
-    }
-    sql += ' ORDER BY sort_order';
-
-    const [filas] = await db.query(sql, valores);
-    res.json(filas);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al obtener las categorías' });
+  if (req.query.home === 'true') {
+    sql += ' AND show_on_home = 1';
   }
+  if (req.query.group && req.query.group !== 'todos') {
+    sql += ' AND menu_group = ?';
+    valores.push(req.query.group);
+  }
+  sql += ' ORDER BY sort_order';
+
+  pool.query(sql, valores, (err, rows) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Error al obtener las categorías' });
+    }
+    res.json(rows);
+  });
 });
 
 // VER UNA CATEGORÍA CON SUS PRODUCTOS
-routes.get('/categories/:slug', async (req, res) => {
-  try {
-    const [cats] = await db.query('SELECT * FROM categories WHERE slug = ?', [req.params.slug]);
-    if (cats.length === 0) {
+routes.get('/categories/:slug', (req, res) => {
+  pool.query('SELECT * FROM categories WHERE slug = ?', [req.params.slug], (err, categorias) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Error al obtener la categoría' });
+    }
+    if (categorias.length === 0) {
       return res.status(404).json({ error: 'Categoría no encontrada' });
     }
-    const categoria = cats[0];
+    const categoria = categorias[0];
 
-    const [productos] = await db.query(
+    // Segunda consulta: los productos activos de esa categoría
+    pool.query(
       'SELECT * FROM products WHERE category_id = ? AND active = 1 ORDER BY id',
-      [categoria.id]
+      [categoria.id],
+      (err, productos) => {
+        if (err) {
+          console.error(err);
+          return res.status(500).json({ error: 'Error al obtener la categoría' });
+        }
+        categoria.products = productos.map(arreglarFotos);
+        res.json(categoria);
+      }
     );
-    categoria.products = productos.map(arreglarFotos);
-    res.json(categoria);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al obtener la categoría' });
-  }
+  });
 });
 
 // VER PRODUCTOS  (?featured=true  ?category=slug)
-routes.get('/products', async (req, res) => {
-  try {
-    let sql = `SELECT p.*, c.slug AS category_slug, c.name AS category_name
-               FROM products p
-               JOIN categories c ON c.id = p.category_id
-               WHERE p.active = 1`;
-    const valores = [];
+routes.get('/products', (req, res) => {
+  let sql = `SELECT p.*, c.slug AS category_slug, c.name AS category_name
+             FROM products p
+             JOIN categories c ON c.id = p.category_id
+             WHERE p.active = 1`;
+  const valores = [];
 
-    if (req.query.featured === 'true') {
-      sql += ' AND p.featured = 1';
-    }
-    if (req.query.category) {
-      sql += ' AND c.slug = ?';
-      valores.push(req.query.category);
-    }
-    sql += ' ORDER BY p.id';
-
-    const [filas] = await db.query(sql, valores);
-    res.json(filas.map(arreglarFotos));
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al obtener los productos' });
+  if (req.query.featured === 'true') {
+    sql += ' AND p.featured = 1';
   }
+  if (req.query.category) {
+    sql += ' AND c.slug = ?';
+    valores.push(req.query.category);
+  }
+  sql += ' ORDER BY p.id';
+
+  pool.query(sql, valores, (err, rows) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Error al obtener los productos' });
+    }
+    res.json(rows.map(arreglarFotos));
+  });
 });
 
 // CREAR UN PEDIDO (pedido + sus productos, en una transacción)
-routes.post('/orders', async (req, res) => {
+// Igual que el préstamo de la clase: si algo falla, rollback y no se guarda nada.
+routes.post('/orders', (req, res) => {
   const { email, address, quantity, notes, items } = req.body;
 
   if (!email || !address) {
@@ -97,49 +107,68 @@ routes.post('/orders', async (req, res) => {
     return res.status(400).json({ error: 'Selecciona al menos un producto' });
   }
 
-  const conn = await db.getConnection();
-  try {
-    await conn.beginTransaction();
-
-    const [resultado] = await conn.query(
-      'INSERT INTO orders (email, address, quantity, notes) VALUES (?, ?, ?, ?)',
-      [email, address, quantity || 1, notes || null]
-    );
-    const idPedido = resultado.insertId;
-
-    for (const item of items) {
-      let nombre = item.name;
-      let precio = Number(item.price) || 0;
-
-      // Si viene el id del producto, usamos el nombre y precio de la base
-      if (item.productId) {
-        const [prod] = await conn.query('SELECT name, price FROM products WHERE id = ?', [item.productId]);
-        if (prod.length > 0) {
-          nombre = prod[0].name;
-          precio = Number(prod[0].price);
-        }
-      }
-
-      await conn.query(
-        `INSERT INTO order_items (order_id, product_id, product_name, unit_price, quantity)
-         VALUES (?, ?, ?, ?, ?)`,
-        [idPedido, item.productId || null, nombre || 'Producto', precio, item.quantity || 1]
-      );
+  // Obtener una conexión para realizar la transacción
+  pool.getConnection((err, conn) => {
+    if (err) {
+      console.error('Error de conexión:', err);
+      return res.status(500).json({ error: 'Error de conexión con la base de datos' });
     }
 
-    await conn.commit();
-    res.status(201).json({ ok: true, order: { id: idPedido, status: 'pending' } });
-  } catch (err) {
-    await conn.rollback();
-    console.error(err);
-    res.status(500).json({ error: 'Error al registrar el pedido' });
-  } finally {
-    conn.release();
-  }
+    // Deshace todo, suelta la conexión y responde con error
+    function cancelar(mensaje, error) {
+      conn.rollback(() => {
+        conn.release();
+        console.error(mensaje, error);
+        res.status(500).json({ error: mensaje });
+      });
+    }
+
+    conn.beginTransaction((err) => {
+      if (err) {
+        conn.release();
+        return res.status(500).json({ error: 'Error al iniciar la transacción' });
+      }
+
+      // 1) Registrar el pedido
+      const pedidoQuery = 'INSERT INTO orders (email, address, quantity, notes) VALUES (?, ?, ?, ?)';
+      conn.query(pedidoQuery, [email, address, quantity || 1, notes || null], (err, resultado) => {
+        if (err) return cancelar('Error al registrar el pedido', err);
+        const idPedido = resultado.insertId;
+
+        // 2) Buscar el nombre y precio real de los productos en la base
+        const ids = items.map((item) => item.productId);
+        conn.query('SELECT id, name, price FROM products WHERE id IN (?)', [ids], (err, productos) => {
+          if (err) return cancelar('Error al buscar los productos', err);
+
+          // Una fila por producto: [order_id, product_id, product_name, unit_price, quantity]
+          const filas = items.map((item) => {
+            const producto = productos.find((p) => p.id === Number(item.productId));
+            const nombre = producto ? producto.name : item.name || 'Producto';
+            const precio = producto ? producto.price : Number(item.price) || 0;
+            return [idPedido, producto ? producto.id : null, nombre, precio, item.quantity || 1];
+          });
+
+          // 3) Registrar los productos del pedido (todas las filas en un solo INSERT)
+          const itemsQuery = `INSERT INTO order_items (order_id, product_id, product_name, unit_price, quantity)
+                              VALUES ?`;
+          conn.query(itemsQuery, [filas], (err) => {
+            if (err) return cancelar('Error al registrar los productos del pedido', err);
+
+            // 4) Confirmar las operaciones
+            conn.commit((err) => {
+              if (err) return cancelar('Error al confirmar el pedido', err);
+              conn.release();
+              res.status(201).json({ ok: true, order: { id: idPedido, status: 'pending' } });
+            });
+          });
+        });
+      });
+    });
+  });
 });
 
 // ENVIAR FEEDBACK
-routes.post('/feedback', async (req, res) => {
+routes.post('/feedback', (req, res) => {
   const { email, rating, comment } = req.body;
   const nota = Number(rating);
 
@@ -147,27 +176,28 @@ routes.post('/feedback', async (req, res) => {
     return res.status(400).json({ error: 'Debes ingresar email y una calificación de 1 a 5' });
   }
 
-  try {
-    const [resultado] = await db.query(
-      'INSERT INTO feedback (email, rating, comment) VALUES (?, ?, ?)',
-      [email, nota, comment || null]
-    );
-    res.status(201).json({ ok: true, feedback: { id: resultado.insertId } });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al guardar el feedback' });
-  }
+  pool.query(
+    'INSERT INTO feedback (email, rating, comment) VALUES (?, ?, ?)',
+    [email, nota, comment || null],
+    (err, resultado) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ error: 'Error al guardar el feedback' });
+      }
+      res.status(201).json({ ok: true, feedback: { id: resultado.insertId } });
+    }
+  );
 });
 
 // VER REDES SOCIALES (para el footer)
-routes.get('/redes', async (req, res) => {
-  try {
-    const [filas] = await db.query('SELECT instagram, facebook, tiktok FROM redes WHERE id = 1');
-    res.json(filas[0]);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al obtener las redes sociales' });
-  }
+routes.get('/redes', (req, res) => {
+  pool.query('SELECT instagram, facebook, tiktok FROM redes WHERE id = 1', (err, rows) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Error al obtener las redes sociales' });
+    }
+    res.json(rows[0]);
+  });
 });
 
 module.exports = routes;
