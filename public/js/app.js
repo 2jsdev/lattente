@@ -1,7 +1,13 @@
 (function () {
   const cart = window.LattenteCart;
+  const SECTION_NAV = new Set(["menu", "orders", "feedback"]);
 
   function currentPage() {
+    const hash = (location.hash || "").replace(/^#/, "").toLowerCase();
+    if (SECTION_NAV.has(hash) || hash === "order-summary" || hash === "catalog-title") {
+      return hash === "order-summary" || hash === "catalog-title" ? "orders" : hash;
+    }
+
     const file = (location.pathname.replace(/\.html$/, "").split("/").pop() || "").toLowerCase();
     if (file === "" || file === "index") return "home";
     if (file === "menu") return "menu";
@@ -54,6 +60,11 @@
     });
   }
 
+  function isOrdersSection() {
+    const hash = (location.hash || "").replace(/^#/, "").toLowerCase();
+    return hash === "orders" || hash === "order-summary" || hash === "catalog-title";
+  }
+
   function renderCartDrawer() {
     const list = document.querySelector("[data-cart-list]");
     const total = document.querySelector("[data-cart-total]");
@@ -62,19 +73,19 @@
     if (!list || !total) return;
 
     const items = cart.readCart();
-    const isOrdersPage = /(?:^|\/)orders\/?$/.test(location.pathname);
+    const onOrders = isOrdersSection();
     if (!items.length) {
       list.innerHTML = `
         <div class="cart-empty-state">
           <span class="cart-empty-state__icon" aria-hidden="true">＋</span>
-          <strong>${isOrdersPage ? "Todavía no elegiste productos" : "Tu carrito está vacío"}</strong>
-          <p>${isOrdersPage ? "Agregalos desde el catálogo para ver tu resumen acá." : "Explorá el menú y agregá algo rico para empezar."}</p>
+          <strong>${onOrders ? "Todavía no elegiste productos" : "Tu carrito está vacío"}</strong>
+          <p>${onOrders ? "Agregalos desde el catálogo para ver tu resumen acá." : "Explorá el menú y agregá algo rico para empezar."}</p>
         </div>`;
       total.textContent = cart.formatPrice(0);
       if (totalRow) totalRow.hidden = true;
       if (action) {
-        action.href = isOrdersPage ? "#catalog-title" : "/#menu";
-        action.textContent = isOrdersPage ? "Volver al catálogo" : "Explorar menú";
+        action.href = onOrders ? "#catalog-title" : "#menu";
+        action.textContent = onOrders ? "Volver al catálogo" : "Explorar menú";
       }
       return;
     }
@@ -106,8 +117,8 @@
     total.textContent = cart.formatPrice(cart.cartTotal(items));
     if (totalRow) totalRow.hidden = false;
     if (action) {
-      action.href = isOrdersPage ? "#order-summary" : "/orders";
-      action.textContent = isOrdersPage ? "Ir al resumen" : "Continuar con el pedido";
+      action.href = onOrders ? "#order-summary" : "#orders";
+      action.textContent = onOrders ? "Ir al resumen" : "Continuar con el pedido";
     }
   }
 
@@ -255,6 +266,57 @@
     });
   }
 
+  function scrollToHashTarget(hash, { updateHistory = true } = {}) {
+    const id = String(hash || "").replace(/^#/, "");
+    if (!id) return false;
+    const target = document.getElementById(id);
+    if (!target) return false;
+
+    if (updateHistory && location.hash !== `#${id}`) {
+      history.pushState(null, "", `${location.pathname}${location.search}#${id}`);
+    }
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    target.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+    markActiveNav();
+    return true;
+  }
+
+  function setupInPageNav() {
+    if (!document.body.classList.contains("home-page")) return;
+
+    document.querySelector(".app-header .brand")?.addEventListener("click", (event) => {
+      event.preventDefault();
+      if (location.hash) {
+        history.pushState(null, "", `${location.pathname}${location.search}`);
+      }
+      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" });
+      markActiveNav();
+    });
+
+    document.querySelectorAll(".header-nav [data-nav]").forEach((link) => {
+      link.addEventListener("click", (event) => {
+        const href = link.getAttribute("href") || "";
+        if (!href.startsWith("#")) return;
+        event.preventDefault();
+        scrollToHashTarget(href);
+      });
+    });
+
+    window.addEventListener("hashchange", () => {
+      markActiveNav();
+    });
+
+    window.addEventListener("popstate", () => {
+      markActiveNav();
+    });
+
+    if (location.hash) {
+      scrollToHashTarget(location.hash, { updateHistory: false });
+    }
+  }
+
   async function api(path, options) {
     const res = await fetch(path, {
       headers: { "Content-Type": "application/json" },
@@ -279,26 +341,7 @@
     updateCartBadge();
     setupCartDrawer();
     setupHeroVideoLoop();
-
-    document.querySelector("body.home-page .app-header .brand")?.addEventListener("click", (event) => {
-      event.preventDefault();
-      if (location.hash) {
-        history.pushState(null, "", `${location.pathname}${location.search}`);
-      }
-      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" });
-    });
-
-    document.querySelector("body.home-page [data-nav='menu']")?.addEventListener("click", (event) => {
-      event.preventDefault();
-      const menu = document.querySelector("#menu");
-      if (!menu) return;
-      if (location.hash !== "#menu") {
-        history.pushState(null, "", `${location.pathname}${location.search}#menu`);
-      }
-      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      menu.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
-    });
+    setupInPageNav();
   });
 
   window.addEventListener("lattente:cart", () => {

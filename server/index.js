@@ -1,14 +1,33 @@
-const { env } = require("./config/env");
-const { createApp } = require("./app");
-const { logger } = require("./lib/logger");
+const express = require('express');
+const cors = require('cors');
+const path = require('path');
 
-const app = createApp();
+const rutasPublicas = require('./routes/public');
+const rutasAdmin = require('./routes/admin');
 
-// Bind to 0.0.0.0 (not 127.0.0.1) so CapRover's nginx can reach the app
-// from outside the container.
-app.listen(env.port, env.host, () => {
-  logger.info(
-    { port: env.port, host: env.host },
-    `Lattente corriendo en http://localhost:${env.port}`
-  );
+const app = express();
+const PUERTO = 3030;
+const carpetaPublic = path.join(__dirname, '..', 'public');
+
+app.use(cors());
+app.use(express.json());
+
+// API
+app.use('/api/admin', rutasAdmin);
+app.use('/api', rutasPublicas);
+
+// Páginas (URLs sin .html) — la parte pública vive en index
+app.get('/orders', (req, res) => res.redirect(301, '/#orders'));
+app.get('/feedback', (req, res) => res.redirect(301, '/#feedback'));
+app.get('/admin', (req, res) => res.sendFile(path.join(carpetaPublic, 'admin.html')));
+app.get('/menu', (req, res) => res.redirect(301, '/#menu'));
+app.get('/orders.html', (req, res) => res.redirect(301, '/#orders'));
+app.get('/feedback.html', (req, res) => res.redirect(301, '/#feedback'));
+
+
+// Archivos estáticos: HTML, CSS, JS, imágenes y fotos subidas
+app.use(express.static(carpetaPublic));
+
+app.listen(PUERTO, () => {
+  console.log(`Lattente corriendo en http://localhost:${PUERTO}`);
 });

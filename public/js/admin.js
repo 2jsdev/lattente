@@ -648,7 +648,7 @@ function categoryFormHtml(cat = null) {
 
 function openProductEditor(product = null) {
   openModal(product ? "Editar producto" : "Nuevo producto", productFormHtml(product), async (fd) => {
-    // Checkboxes only appear when checked; send explicit flags for multipart.
+    // Los checkbox solo se envían si están marcados; mandamos el valor siempre (multipart).
     fd.set("featured", fd.get("featured") === "on" ? "true" : "false");
     fd.set("active", fd.get("active") === "on" ? "true" : "false");
 

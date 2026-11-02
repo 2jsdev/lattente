@@ -69,8 +69,8 @@
       </a>
       <nav class="header-nav" aria-label="Principal">
         <a href="#menu" data-nav="menu">Menú</a>
-        <a href="/orders" data-nav="orders">Pedido</a>
-        <a href="/feedback" data-nav="feedback">Feedback</a>
+        <a href="#orders" data-nav="orders">Pedido</a>
+        <a href="#feedback" data-nav="feedback">Feedback</a>
       </nav>
       <form class="hero-search" data-search role="search">
         <label class="hero-search__field">
@@ -168,6 +168,178 @@
       </div>
     </section>
 
+    <main class="orders-page" id="orders">
+      <header class="orders-intro">
+        <div class="orders-intro__copy">
+          <h2>Armá tu pedido</h2>
+          <p>
+            Elegí tus favoritos, indicá dónde entregarlos y enviá tu pedido.
+          </p>
+        </div>
+        <ul class="orders-notes" aria-label="Información del pedido">
+          <li>
+            <strong>Mismo día</strong>
+            <span>Para antojos urgentes, llamanos y confirmamos stock.</span>
+          </li>
+          <li>
+            <strong>Después de las 16:00</strong>
+            <span>El pedido pasa a la hornada de la mañana siguiente.</span>
+          </li>
+        </ul>
+      </header>
+
+      <div class="orders-layout">
+        <section class="orders-catalog" aria-labelledby="catalog-title">
+          <div class="orders-catalog__toolbar">
+            <h3 id="catalog-title">Elegí tus productos</h3>
+            <label class="orders-search">
+              <span class="orders-search__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+                  <circle cx="10.5" cy="10.5" r="6.25" stroke="currentColor" stroke-width="1.75" />
+                  <path d="M15.2 15.2 20 20" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
+                </svg>
+              </span>
+              <input
+                type="search"
+                name="catalog-q"
+                data-catalog-search
+                placeholder="Buscar por nombre…"
+                aria-label="Buscar producto"
+                autocomplete="off"
+                enterkeyhint="search"
+              />
+            </label>
+          </div>
+          <div class="orders-filters" data-catalog-filters role="toolbar" aria-label="Filtrar por categoría"></div>
+          <div class="orders-product-grid" data-catalog-grid></div>
+          <p class="orders-catalog-empty" data-catalog-empty hidden>No hay productos con esa búsqueda.</p>
+        </section>
+
+        <aside class="orders-checkout" id="order-summary" aria-labelledby="checkout-title">
+          <form class="orders-panel" data-order-form>
+            <div class="orders-panel__head">
+              <h3 id="checkout-title">Resumen del pedido</h3>
+              <p class="orders-panel__count" data-order-count>0 productos</p>
+            </div>
+
+            <div class="orders-cart" data-order-products aria-live="polite"></div>
+
+            <section class="orders-fields" aria-labelledby="delivery-title" hidden>
+              <h4 id="delivery-title">Datos de entrega</h4>
+              <div class="field">
+                <label for="order-email">Correo electrónico</label>
+                <input
+                  id="order-email"
+                  name="email"
+                  type="email"
+                  required
+                  autocomplete="email"
+                  placeholder="tu@correo.com"
+                />
+              </div>
+              <div class="field">
+                <label for="order-address">Dirección de entrega</label>
+                <input
+                  id="order-address"
+                  name="address"
+                  type="text"
+                  required
+                  autocomplete="street-address"
+                  placeholder="Calle, número, referencia"
+                />
+              </div>
+              <input id="quantity" name="quantity" type="hidden" value="1" />
+            </section>
+
+            <div class="orders-panel__footer">
+              <div class="orders-total">
+                <span>Total</span>
+                <strong data-order-total>0,00 Bs.</strong>
+              </div>
+              <button class="btn" type="submit" disabled>Enviar pedido</button>
+              <p class="panel-note">Nunca envíes contraseñas ni datos sensibles.</p>
+            </div>
+          </form>
+        </aside>
+      </div>
+    </main>
+
+    <div class="feedback-grid" id="feedback">
+      <section class="feedback-copy">
+        <h2>Queremos que tu experiencia con nuestro servicio sea siempre la mejor.</h2>
+        <hr class="section-rule" />
+        <p>Ayúdanos a mejorar calificando nuestros servicios:</p>
+      </section>
+
+      <section class="feedback-form-wrap">
+        <form class="panel feedback-panel" data-feedback-form>
+          <header class="feedback-panel__header">
+            <p class="feedback-panel__eyebrow">Tu opinión nos ayuda</p>
+            <h3>Deja tu calificación</h3>
+            <p>Contanos cómo fue tu experiencia en Lattente.</p>
+          </header>
+
+          <div class="field">
+            <label for="feedback-email">Correo electrónico</label>
+            <input
+              id="feedback-email"
+              name="email"
+              type="email"
+              required
+              autocomplete="email"
+              inputmode="email"
+              placeholder="tu@correo.com"
+            />
+          </div>
+
+          <div class="field">
+            <label id="rating-label">¿Cómo estuvo el servicio?</label>
+            <div class="feedback-faces" role="radiogroup" aria-labelledby="rating-label">
+              <label title="Muy mal" aria-label="Muy mal">
+                <input type="radio" name="rating" value="1" required />
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="m8.5 9 1 1m6-1-1 1M8 17c1-2 2.3-3 4-3s3 .8 4 3" /><path d="m7 6 2 1m8-1-2 1" /></svg>
+                <span class="feedback-face__text">Muy mal</span>
+              </label>
+              <label title="Mal" aria-label="Mal">
+                <input type="radio" name="rating" value="2" />
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="m8.5 9 1 1m6-1-1 1M8 17c1-2 2.3-3 4-3s3 .8 4 3" /></svg>
+                <span class="feedback-face__text">Mal</span>
+              </label>
+              <label title="Neutral" aria-label="Neutral">
+                <input type="radio" name="rating" value="3" />
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="m8.5 9 1 1m6-1-1 1M8 16h8" /></svg>
+                <span class="feedback-face__text">Neutral</span>
+              </label>
+              <label title="Bien" aria-label="Bien">
+                <input type="radio" name="rating" value="4" />
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="m8.5 9 1 1m6-1-1 1M8 14c1 2 2.3 3 4 3s3-.8 4-3" /></svg>
+                <span class="feedback-face__text">Bien</span>
+              </label>
+              <label title="Excelente" aria-label="Excelente">
+                <input type="radio" name="rating" value="5" />
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="m8.5 9 1 1m6-1-1 1M7.5 13.5c1 2.3 2.5 3.5 4.5 3.5s3.5-1.2 4.5-3.5" /></svg>
+                <span class="feedback-face__text">Excelente</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="feedback-comment">Comentario</label>
+            <textarea
+              id="feedback-comment"
+              name="comment"
+              rows="4"
+              maxlength="1200"
+              placeholder="¿Qué salió bien o qué podríamos mejorar?"
+            ></textarea>
+          </div>
+
+          <button class="btn" type="submit">Enviar calificación</button>
+          <p class="panel-note">Tu correo solo se usa para dar seguimiento a tu comentario.</p>
+        </form>
+      </section>
+    </div>
+
     <div class="cart-drawer" data-cart-drawer>
       <div class="cart-backdrop"></div>
       <aside class="cart-panel" role="dialog" aria-modal="true" aria-labelledby="cart-title" tabindex="-1">
@@ -185,7 +357,7 @@
             <span>Total</span>
             <span data-cart-total>0,00 Bs.</span>
           </div>
-          <a class="btn" data-cart-action href="/#menu">Explorar menú</a>
+          <a class="btn" data-cart-action href="#menu">Explorar menú</a>
         </div>
       </aside>
     </div>
@@ -194,6 +366,8 @@
     <script src="/js/app.js"></script>
     <script src="/js/product-media.js"></script>
     <script src="/js/menu.js"></script>
+    <script src="/js/orders.js"></script>
+    <script src="/js/feedback.js"></script>
     <script src="/js/site-footer.js"></script>
   </body>
 </html>

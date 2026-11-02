@@ -1,113 +1,86 @@
 # Lattente
 
-Réplica del sitio Canva de **Lattente**: HTML, CSS y JS en el frontend, con API Node.js + PostgreSQL.
+Sitio web de la cafetería **Lattente**: HTML, CSS y JS en el frontend, con un
+servidor **Node.js + Express** y base de datos **MySQL (Laragon)**.
 
 ## Requisitos
 
-- Node.js 18+
-- Docker (para Postgres) o una instancia local de PostgreSQL
+- [Laragon](https://laragon.org/) (trae MySQL y HeidiSQL)
+- Node.js 18 o superior
 
-## Arranque rápido
+## Cómo levantarlo
 
-```bash
-# 1. Base de datos (Postgres en localhost:5433)
-docker compose up -d
+1. **Abrir Laragon** y apretar **Start All** (tiene que estar MySQL en verde).
+2. **Crear la base de datos:** en Laragon apretar **Database** (abre HeidiSQL),
+   conectarse, ir a *Archivo → Cargar archivo SQL…*, elegir `db/lattente.sql`
+   y ejecutarlo con **F9**. Esto crea la base `lattente` con las tablas y el menú.
+3. **Instalar dependencias** (una sola vez), en la terminal de Laragon dentro
+   de la carpeta del proyecto:
 
-# 2. Dependencias
-cp .env.example .env
-npm install
+   ```bash
+   npm install
+   ```
 
-# 3. (Opcional si la DB ya existía) reinicializar schema + seed
-npm run db:init
+4. **Arrancar el servidor:**
 
-# 4. Servidor
-npm run dev
+   ```bash
+   npm start
+   ```
+
+5. Abrir <http://localhost:3030>
+
+> Si MySQL de Laragon tiene contraseña, cambiarla en `server/conexion.js`.
+
+## Estructura
+
 ```
-
-Abre [http://localhost:3030](http://localhost:3030).
-
-### Con Docker (todo junto)
-
-```bash
-docker compose up --build
+lattente/
+├── db/
+│   └── lattente.sql        ← tablas + datos (importar en HeidiSQL)
+├── public/                 ← páginas HTML, CSS, JS e imágenes
+│   └── uploads/            ← fotos que se suben desde el admin
+└── server/
+    ├── index.js            ← arranca Express (puerto 3030)
+    ├── conexion.js         ← conexión a MySQL
+    └── routes/
+        ├── public.js       ← API del menú, pedidos y feedback
+        └── admin.js        ← API del panel de administración
 ```
-
-Levanta Postgres + la app. La app espera a la base de datos, aplica el schema
-y carga el catálogo si está vacío.
-
-## Despliegue
-
-Production corre en **CapRover** con una imagen única (frontend + API en el
-mismo contenedor).
-
-- Guía completa: **[docs/deployment-caprover.md](docs/deployment-caprover.md)**
-- Deploy automático con GitHub Actions: `.github/workflows/deploy-caprover.yaml`
-
-Los secretos de deploy (`CAPROVER_SERVER`, `CAPROVER_APP`, `CAPROVER_TOKEN`)
-se configuran en *Settings → Secrets and variables → Actions*.
 
 ## Páginas
 
 | Ruta | Contenido |
 | --- | --- |
-| `/` | Portada. El menú de categorías va debajo del hero (`/#menu`, `/?category=...`, `/?q=...`) |
-| `/menu` | Redirige a `/#menu` |
-| `/orders` | Catálogo con búsqueda + resumen de pedido |
-| `/feedback` | Calificación del servicio |
-| `/admin` | CMS (productos, categorías, pedidos, feedback) |
+| `/` | Portada, menú, pedido (`#orders`) y feedback (`#feedback`) |
+| `/admin` | Panel para administrar productos, categorías, pedidos y feedback |
 
-En todas las páginas la cabecera es la misma: logo **Lattente** (enlaza a la
-portada), navegación *Menú / Pedido / Feedback* y el carrito. El buscador solo
-aparece en la portada y en el menú.
+## Admin
 
-## Admin / CMS
+Entrar a <http://localhost:3030/admin> con la contraseña **`lattente-admin`**
+(se cambia en `server/routes/admin.js`).
 
-1. Abrí [http://localhost:3030/admin](http://localhost:3030/admin)
-2. Entrá con la contraseña de `ADMIN_PASSWORD` en `.env` (por defecto `lattente-admin`)
+## Tablas
 
-Desde el panel podés crear/editar/borrar productos y categorías (precios, fotos con Multer, orden, visibilidad en home), ver pedidos y actualizar su estado, y revisar feedback.
-
-El panel tiene cuatro pestañas:
-
-| Pestaña | Qué se hace ahí |
+| Tabla | Para qué |
 | --- | --- |
-| **Productos** | Crear/editar/borrar productos. Se sube **varias fotos a la vez** (`Subir fotos`): la primera es la portada y el resto se ven en la galería del producto. `Destacado` lo muestra en la home. |
-| **Categorías** | Secciones del menú (Calientes, Frías, Comida, Extras, Creaciones). El `Grupo` decide en qué filtro cae y `Home` si aparece en la portada. |
-| **Pedidos** | Listado de pedidos con datos del cliente y total. El `estado` se cambia a `confirmed`, `done` o `cancelled`. |
-| **Feedback** | Calificaciones y comentarios que dejan los clientes. |
-
-Fotos: en el listado de productos se ven en una rejilla 2×2 y al hacer clic se abren
-a pantalla completa (con zoom, swipe y flechas del teclado).
-
-Auth admin: JWT (`jsonwebtoken`) vía `Authorization: Bearer <token>`.
-
-Backend también usa:
-
-- **zod** — validación de body/query/params
-- **helmet** — headers de seguridad
-- **morgan** + **pino** — logs HTTP y de aplicación
-- **express-rate-limit** — límite en API y login
-- **multer** + **sharp** — subida y optimización de fotos (WebP)
+| `categories` | Secciones del menú |
+| `products` | Productos (precio, fotos, destacado, activo) |
+| `orders` | Pedidos de los clientes |
+| `order_items` | Productos de cada pedido |
+| `feedback` | Calificaciones (1 a 5) y comentarios |
+| `site_settings` | Links de redes sociales |
 
 ## API
 
-- `GET /api/categories`
-- `GET /api/categories/:slug`
-- `GET /api/products?featured=true`
-- `POST /api/orders`
-- `POST /api/feedback`
-- `POST /api/admin/login` + rutas protegidas bajo `/api/admin/*`
-- Subida de fotos: `multipart/form-data` en productos (`photos`) y categorías (`photo`)
-
-## Notas
-
-- El carrito vive en `localStorage` y se envía al crear un pedido.
-- Precios en bolivianos (`Bs.`), con dirección de Cochabamba del diseño original.
-- Cambiá `ADMIN_PASSWORD` y `JWT_SECRET` antes de desplegar.
-- Las imágenes subidas quedan en `public/uploads/` en local. En producción van
-  a `UPLOAD_DIR` (por defecto `/app/data/uploads`), que debe ser un volumen
-  persistente de CapRover para no perderlas al redesplegar.
-- `npm run db:init` **borra** la base de datos (reset local). En producción el
-  arranque usa `npm run db:migrate`, que sólo aplica el schema y carga el
-  catálogo si la base está vacía — redesplegar nunca borra pedidos ni feedback.
-
+| Método | Ruta | Qué hace |
+| --- | --- | --- |
+| GET | `/api/categories` | Lista de categorías (`?home=true`) |
+| GET | `/api/categories/:slug` | Una categoría con sus productos |
+| GET | `/api/products` | Productos activos (`?featured=true`) |
+| POST | `/api/orders` | Crear un pedido |
+| POST | `/api/feedback` | Enviar una calificación |
+| POST | `/api/admin/login` | Iniciar sesión del admin |
+| GET/POST/PUT/DELETE | `/api/admin/products` | CRUD de productos |
+| GET/POST/PUT/DELETE | `/api/admin/categories` | CRUD de categorías |
+| GET / PATCH | `/api/admin/orders` | Ver pedidos / cambiar estado |
+| GET | `/api/admin/feedback` | Ver feedback |

@@ -74,7 +74,7 @@
           link.hidden = false;
           visibleLinks += 1;
         } catch {
-          // Invalid saved links stay hidden until corrected in Admin.
+          // Los enlaces guardados que no son válidos se ocultan hasta corregirlos en el Admin.
         }
       });
       if (socialSection) socialSection.hidden = visibleLinks === 0;
