@@ -26,6 +26,19 @@ const ORDER_STATUS = {
   cancelled: "Cancelado",
 };
 
+// ---------- WHATSAPP ----------
+// Código de país de Bolivia (se agrega adelante del celular)
+const CODIGO_PAIS = "591";
+
+// Arma el link de WhatsApp con el mensaje ya escrito para el cliente.
+// wa.me abre WhatsApp (web o celular); el encargado solo aprieta "Enviar".
+function linkWhatsApp(pedido) {
+  const numero = String(pedido.phone || "").replace(/\D/g, ""); // deja solo los números
+  if (!numero) return "";
+  const mensaje = `Hola, te escribimos de Lattente. Tu pedido #${pedido.id} ya está listo, puedes pasar a recogerlo.`;
+  return `https://wa.me/${CODIGO_PAIS}${numero}?text=${encodeURIComponent(mensaje)}`;
+}
+
 let categoriesCache = [];
 let toastTimer = null;
 let modalReturnFocus = null;
@@ -471,12 +484,16 @@ async function loadOrders() {
       options += `<option value="${s}" ${o.status === s ? "selected" : ""}>${ORDER_STATUS[s]}</option>`;
     });
 
+    const whatsapp = linkWhatsApp(o);
+
     els.ordersTbody.innerHTML += `
       <tr>
         <td data-sort-value="${o.id}">${o.id}</td>
         <td>
           <strong>${escapeHtml(o.email)}</strong>
+          ${o.phone ? `<div class="muted">Cel. ${escapeHtml(o.phone)}</div>` : ""}
           <div class="muted">${escapeHtml(o.address || "")}</div>
+          ${whatsapp ? `<a class="btn whatsapp" href="${escapeHtml(whatsapp)}" target="_blank" rel="noopener">Avisar por WhatsApp</a>` : ""}
           ${o.notes ? `<div class="muted">${escapeHtml(o.notes)}</div>` : ""}
         </td>
         <td data-sort-value="${total}">Bs. ${total.toFixed(2)}</td>
@@ -488,6 +505,30 @@ async function loadOrders() {
       </tr>`;
   });
   applyTableView("orders");
+}
+
+// Reporte del día: GET /api/admin/report?fecha=AAAA-MM-DD
+async function loadReport() {
+  const inputFecha = document.getElementById("report-date");
+  if (!inputFecha.value) inputFecha.value = new Date().toLocaleDateString("en-CA"); // hoy, en formato AAAA-MM-DD
+
+  const reporte = await apiAdmin(`/report?fecha=${inputFecha.value}`);
+  document.getElementById("report-orders").textContent = reporte.pedidos;
+  document.getElementById("report-total").textContent = `Bs. ${reporte.total.toFixed(2)}`;
+
+  const tbody = document.getElementById("report-tbody");
+  tbody.innerHTML = "";
+  if (reporte.productos.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="3" class="muted">No hay ventas este día.</td></tr>`;
+  }
+  reporte.productos.forEach((p) => {
+    tbody.innerHTML += `
+      <tr>
+        <td>${escapeHtml(p.nombre)}</td>
+        <td>${p.cantidad}</td>
+        <td>Bs. ${Number(p.total).toFixed(2)}</td>
+      </tr>`;
+  });
 }
 
 async function loadFeedback() {
@@ -518,6 +559,7 @@ async function refreshAll() {
   await loadCategories();
   await loadProducts();
   await loadOrders();
+  await loadReport();
   await loadFeedback();
   await loadSocialLinks();
 }
@@ -580,7 +622,7 @@ function productFormHtml(product = null) {
           </div>
           <div class="field full">
             <label for="images">URLs de fotos (una por línea)</label>
-            <textarea id="images" name="images" rows="3" placeholder="https://… o /uploads/…">${escapeHtml(fotos.join("\n"))}</textarea>
+            <textarea id="images" name="images" rows="3" placeholder="https://… o /multimedia/uploads/…">${escapeHtml(fotos.join("\n"))}</textarea>
           </div>
         </div>
       </section>
@@ -744,6 +786,15 @@ els.refreshOrdersBtn.addEventListener("click", async () => {
   }
 });
 
+// Al cambiar el día del reporte, se vuelve a pedir
+document.getElementById("report-date").addEventListener("change", async () => {
+  try {
+    await loadReport();
+  } catch (error) {
+    showToast(error.message, true);
+  }
+});
+
 els.refreshFeedbackBtn.addEventListener("click", async () => {
   try {
     await loadFeedback();
@@ -834,6 +885,7 @@ els.ordersTbody.addEventListener("change", async (e) => {
       body: JSON.stringify({ status: select.value }),
     });
     showToast("Estado actualizado");
+    await loadReport(); // un pedido cancelado deja de sumar en el reporte
   } catch (error) {
     showToast(error.message, true);
   }

@@ -11,7 +11,7 @@ function escapeHtml(valor) {
     .replace(/'/g, "&#39;");
 }
 
-// Devuelve la URL solo si es http/https (o una ruta del sitio como /uploads/...)
+// Devuelve la URL solo si es http/https (o una ruta del sitio como /multimedia/uploads/...)
 function urlSegura(valor) {
   const texto = String(valor || "").trim();
   if (!texto) return "";

@@ -166,6 +166,7 @@ async function enviarPedido(evento) {
 
   const pedido = {
     email: form.elements.email.value.trim(),
+    phone: form.elements.phone.value.trim(),
     address: form.elements.address.value.trim(),
     quantity: cartCount(cart),
     notes: "",
@@ -174,16 +175,31 @@ async function enviarPedido(evento) {
 
   submit.disabled = true;
   try {
-    await api("/api/orders", { method: "POST", body: JSON.stringify(pedido) });
+    const total = cartTotal(cart); // se guarda antes de vaciar el carrito
+    const respuesta = await api("/api/orders", { method: "POST", body: JSON.stringify(pedido) });
     clearCart();
     form.reset();
-    showToast("Pedido enviado. Gracias");
+    mostrarQrDePago(respuesta.order.id, total);
   } catch (error) {
     showToast(error.message, "error");
   } finally {
     submit.disabled = false;
     renderOrderProducts();
   }
+}
+
+// Después de enviar: esconde el formulario y muestra el QR con el total a pagar
+function mostrarQrDePago(idPedido, total) {
+  document.querySelector("[data-qr-order-id]").textContent = "#" + idPedido;
+  document.querySelector("[data-qr-total]").textContent = formatPrice(total);
+  document.querySelector("[data-order-form]").hidden = true;
+  document.querySelector("[data-order-qr]").hidden = false;
+}
+
+// Botón "Hacer otro pedido": vuelve a mostrar el formulario
+function cerrarQrDePago() {
+  document.querySelector("[data-order-qr]").hidden = true;
+  document.querySelector("[data-order-form]").hidden = false;
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -242,4 +258,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   document.querySelector("[data-order-form]").addEventListener("submit", enviarPedido);
+  document.querySelector("[data-qr-close]").addEventListener("click", cerrarQrDePago);
+  // Si agrega un producto mientras ve el QR, vuelve a aparecer el formulario
+  window.addEventListener("lattente:cart", () => {
+    if (readCart().length > 0) cerrarQrDePago();
+  });
 });

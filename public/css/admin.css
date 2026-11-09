@@ -223,6 +223,17 @@ a {
   background: var(--danger);
 }
 
+/* Botón "Avisar por WhatsApp" de cada pedido */
+.btn.whatsapp {
+  display: inline-block;
+  margin-top: 0.45rem;
+  padding: 0.35rem 0.8rem;
+  background: var(--ok);
+  font-size: 0.82rem;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
 .btn:disabled {
   opacity: 0.55;
   cursor: not-allowed;
@@ -912,4 +923,50 @@ tr:last-child td {
   .upload-format {
     max-width: 7rem;
   }
+}
+
+/* ---------- REPORTE DEL DÍA ---------- */
+.report-date {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--chocolate-mid);
+  font-size: 0.9rem;
+}
+
+.report-date input {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--chocolate);
+  font: inherit;
+}
+
+.report-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 0.9rem;
+  margin-bottom: 1.1rem;
+}
+
+.report-card {
+  display: grid;
+  gap: 0.2rem;
+  padding: 1rem 1.1rem;
+  border-radius: 10px;
+  background: var(--chocolate);
+  color: var(--cream);
+}
+
+.report-card span {
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+.report-card strong {
+  font-family: var(--serif);
+  font-size: 2.2rem;
+  font-weight: 600;
+  line-height: 1.1;
 }

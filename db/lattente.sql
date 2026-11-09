@@ -38,6 +38,7 @@ CREATE TABLE products (
 CREATE TABLE orders (
   id INT AUTO_INCREMENT PRIMARY KEY,
   email VARCHAR(150) NOT NULL,
+  phone VARCHAR(20) NOT NULL DEFAULT '',   -- celular para avisar por WhatsApp
   address VARCHAR(255) NOT NULL,
   quantity INT NOT NULL DEFAULT 1,
   notes TEXT,

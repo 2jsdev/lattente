@@ -128,3 +128,19 @@
     transition: none;
   }
 }
+
+/* Mapa de ubicación (Google Maps) */
+.site-footer__map {
+  display: block;
+  width: min(100%, 22rem);
+  height: 11rem;
+  margin: 0.9rem auto 0.55rem;
+  border: 1px solid rgba(253, 248, 232, 0.35);
+  border-radius: 10px;
+}
+
+.site-footer__directions {
+  color: inherit;
+  font-size: 0.95rem;
+  text-underline-offset: 0.2em;
+}

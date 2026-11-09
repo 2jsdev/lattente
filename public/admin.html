@@ -51,6 +51,7 @@
         <button type="button" class="tab is-active" data-tab="products">Productos</button>
         <button type="button" class="tab" data-tab="categories">Categorías</button>
         <button type="button" class="tab" data-tab="orders">Pedidos</button>
+        <button type="button" class="tab" data-tab="report">Reporte del día</button>
         <button type="button" class="tab" data-tab="feedback">Feedback</button>
         <button type="button" class="tab" data-tab="social">Redes sociales</button>
       </div>
@@ -162,6 +163,42 @@
           </table>
         </div>
         <p class="table-empty hidden" data-table-empty="orders">No encontramos pedidos con esa búsqueda.</p>
+      </section>
+
+      <section class="panel hidden" data-panel="report">
+        <div class="toolbar">
+          <h2>Reporte del día</h2>
+          <label class="report-date">
+            Día
+            <input type="date" id="report-date" />
+          </label>
+        </div>
+        <p class="panel-hint">
+          Pedidos y ventas del día elegido. Los pedidos <em>cancelados</em> no
+          se cuentan.
+        </p>
+        <div class="report-cards">
+          <div class="report-card">
+            <span>Pedidos</span>
+            <strong id="report-orders">0</strong>
+          </div>
+          <div class="report-card">
+            <span>Total vendido</span>
+            <strong id="report-total">Bs. 0.00</strong>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th>Cantidad</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody id="report-tbody"></tbody>
+          </table>
+        </div>
       </section>
 
       <section class="panel hidden" data-panel="feedback">

@@ -8,8 +8,8 @@
       name="description"
       content="Conocé el menú de Lattente y encontrá tu café, chocolate o bebida favorita. Hacé tu pedido fácil y rápido."
     />
-    <link rel="icon" type="image/png" href="/images/lattente-icon.png" sizes="128x128" />
-    <link rel="preload" as="image" href="/images/lattente-logo.webp" fetchpriority="high" />
+    <link rel="icon" type="image/png" href="/multimedia/lattente-icon.png" sizes="128x128" />
+    <link rel="preload" as="image" href="/multimedia/lattente-logo.webp" fetchpriority="high" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -22,7 +22,7 @@
   <body class="home-page">
     <header class="app-header">
       <a class="brand" href="/" data-nav="home" aria-label="Lattente — inicio">
-        <img src="/images/lattente-logo.webp" width="1440" height="480" alt="Lattente" fetchpriority="high" />
+        <img src="/multimedia/lattente-logo.webp" width="1440" height="480" alt="Lattente" fetchpriority="high" />
       </a>
       <nav class="header-nav" aria-label="Principal">
         <a href="#menu" data-nav="menu">Menú</a>
@@ -67,11 +67,11 @@
         muted
         playsinline
         preload="metadata"
-        poster="/images/hero-coffee-poster.jpg"
+        poster="/multimedia/hero-coffee-poster.jpg"
         aria-hidden="true"
         tabindex="-1"
       >
-        <source src="/videos/hero-coffee.mp4" type="video/mp4" />
+        <source src="/multimedia/hero-coffee.mp4" type="video/mp4" />
       </video>
       <video
         class="hero-video"
@@ -79,15 +79,15 @@
         muted
         playsinline
         preload="none"
-        poster="/images/hero-coffee-poster.jpg"
+        poster="/multimedia/hero-coffee-poster.jpg"
         aria-hidden="true"
         tabindex="-1"
       >
-        <source src="/videos/hero-coffee.mp4" type="video/mp4" />
+        <source src="/multimedia/hero-coffee.mp4" type="video/mp4" />
       </video>
       <div class="hero-content">
         <h1 class="hero-title">
-          <img class="hero-logo" src="/images/lattente-logo.webp" width="1440" height="480" alt="Lattente" fetchpriority="high" />
+          <img class="hero-logo" src="/multimedia/lattente-logo.webp" width="1440" height="480" alt="Lattente" fetchpriority="high" />
         </h1>
         <p class="hero-copy">
           Bienvenid@ a la página oficial de Lattente. Contamos con una gran
@@ -195,6 +195,19 @@
                 />
               </div>
               <div class="field">
+                <label for="order-phone">Celular (WhatsApp)</label>
+                <input
+                  id="order-phone"
+                  name="phone"
+                  type="tel"
+                  required
+                  autocomplete="tel"
+                  inputmode="numeric"
+                  pattern="[0-9 ]{8,15}"
+                  placeholder="70000000"
+                />
+              </div>
+              <div class="field">
                 <label for="order-address">Dirección de entrega</label>
                 <input
                   id="order-address"
@@ -217,6 +230,16 @@
               <p class="panel-note">Nunca envíes contraseñas ni datos sensibles.</p>
             </div>
           </form>
+
+          <!-- Se muestra después de enviar el pedido (orders.js lo hace visible) -->
+          <section class="orders-panel orders-qr" data-order-qr hidden>
+            <h3>¡Pedido <span data-qr-order-id></span> recibido!</h3>
+            <p>Total a pagar: <strong data-qr-total></strong></p>
+            <!-- Para poner el QR real: reemplaza el archivo public/multimedia/qr-pago.png -->
+            <img src="/multimedia/qr-pago.png" width="240" height="240" alt="Código QR para pagar el pedido" />
+            <p class="panel-note">Escanea el QR con tu app del banco. Te avisaremos por WhatsApp cuando tu pedido esté listo.</p>
+            <button class="btn" type="button" data-qr-close>Hacer otro pedido</button>
+          </section>
         </aside>
       </div>
     </main>
@@ -331,7 +354,7 @@
         <section class="site-footer__contact" aria-label="Contacto">
           <img
             class="site-footer__brand"
-            src="/images/lattente-coffee-emblem.png"
+            src="/multimedia/lattente-coffee-emblem.png"
             alt="Lattente Coffee Shop"
             loading="lazy"
             decoding="async"
@@ -339,6 +362,20 @@
           <div>
             <h2>Dirección</h2>
             <address>Av. América 763, Cochabamba</address>
+            <!-- Mapa de Google Maps: para cambiar la ubicación, cambia el texto después de "q=" -->
+            <iframe
+              class="site-footer__map"
+              src="https://www.google.com/maps?q=Av.+Am%C3%A9rica+763,+Cochabamba,+Bolivia&output=embed"
+              title="Ubicación de Lattente en Google Maps"
+              loading="lazy"
+              referrerpolicy="no-referrer-when-downgrade"
+            ></iframe>
+            <a
+              class="site-footer__directions"
+              href="https://www.google.com/maps/search/?api=1&query=Av.+Am%C3%A9rica+763,+Cochabamba,+Bolivia"
+              target="_blank"
+              rel="noopener"
+            >Cómo llegar ↗</a>
           </div>
           <div>
             <h2>Redes sociales</h2>

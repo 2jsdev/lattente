@@ -8,15 +8,15 @@ const pool = require('../conexion');
 const routes = express.Router();
 
 // ---------- CONTRASEÑA DEL ADMIN ----------
-const ADMIN_PASSWORD = 'lattente-admin';
+const ADMIN_PASSWORD = 'ravasco';
 
 // Tokens de las sesiones abiertas (se borran al reiniciar el servidor)
 const sesiones = new Set();
 
 // ---------- SUBIDA DE FOTOS (multer) ----------
-// Guarda las fotos en public/uploads con un nombre único (fecha + número al azar)
+// Guarda las fotos en public/multimedia/uploads con un nombre único (fecha + número al azar)
 const almacen = multer.diskStorage({
-  destination: path.join(__dirname, '..', '..', 'public', 'uploads'),
+  destination: path.join(__dirname, '..', '..', 'public', 'multimedia', 'uploads'),
   filename: (req, file, cb) => {
     const extension = path.extname(file.originalname).toLowerCase() || '.jpg';
     cb(null, Date.now() + '-' + Math.round(Math.random() * 1e6) + extension);
@@ -41,7 +41,7 @@ function listaDeFotos(body, archivos) {
     const limpia = url.trim();
     if (limpia && !fotos.includes(limpia)) fotos.push(limpia);
   });
-  (archivos || []).forEach((archivo) => fotos.push('/uploads/' + archivo.filename));
+  (archivos || []).forEach((archivo) => fotos.push('/multimedia/uploads/' + archivo.filename));
   return fotos;
 }
 
@@ -178,7 +178,7 @@ routes.post('/categories', subir.single('photo'), (req, res) => {
   if (!name || !slug) {
     return res.status(400).json({ error: 'El nombre y el slug son obligatorios' });
   }
-  const imagen = req.file ? '/uploads/' + req.file.filename : (req.body.image_url || null);
+  const imagen = req.file ? '/multimedia/uploads/' + req.file.filename : (req.body.image_url || null);
 
   const sql = `INSERT INTO categories (slug, name, image_url, menu_group, show_on_home, sort_order)
                VALUES (?, ?, ?, ?, ?, ?)`;
@@ -203,7 +203,7 @@ routes.put('/categories/:id', subir.single('photo'), (req, res) => {
   if (!name || !slug) {
     return res.status(400).json({ error: 'El nombre y el slug son obligatorios' });
   }
-  const imagen = req.file ? '/uploads/' + req.file.filename : (req.body.image_url || null);
+  const imagen = req.file ? '/multimedia/uploads/' + req.file.filename : (req.body.image_url || null);
 
   const sql = `UPDATE categories SET slug = ?, name = ?, image_url = ?, menu_group = ?, show_on_home = ?, sort_order = ?
                WHERE id = ?`;
@@ -279,6 +279,52 @@ routes.patch('/orders/:id', (req, res) => {
       return res.status(404).json({ error: 'Pedido no encontrado' });
     }
     res.json({ ok: true, status: req.body.status });
+  });
+});
+
+// ================= REPORTE DEL DÍA =================
+// GET /api/admin/report?fecha=2026-11-09  (sin fecha = hoy)
+// Cuenta los pedidos de ese día y suma lo vendido. Los pedidos cancelados no cuentan.
+routes.get('/report', (req, res) => {
+  const fecha = req.query.fecha || new Date().toLocaleDateString('en-CA'); // en-CA da el formato AAAA-MM-DD
+
+  // 1) Cantidad de pedidos y total vendido
+  const resumenQuery = `
+    SELECT COUNT(DISTINCT o.id) AS pedidos,
+           COALESCE(SUM(i.unit_price * i.quantity), 0) AS total
+    FROM orders o
+    JOIN order_items i ON i.order_id = o.id
+    WHERE DATE(o.created_at) = ? AND o.status <> 'cancelled'`;
+
+  pool.query(resumenQuery, [fecha], (err, resumen) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Error al obtener el reporte' });
+    }
+
+    // 2) Productos vendidos ese día, del más vendido al menos vendido
+    const productosQuery = `
+      SELECT i.product_name AS nombre,
+             SUM(i.quantity) AS cantidad,
+             SUM(i.unit_price * i.quantity) AS total
+      FROM orders o
+      JOIN order_items i ON i.order_id = o.id
+      WHERE DATE(o.created_at) = ? AND o.status <> 'cancelled'
+      GROUP BY i.product_name
+      ORDER BY cantidad DESC`;
+
+    pool.query(productosQuery, [fecha], (err, productos) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ error: 'Error al obtener el reporte' });
+      }
+      res.json({
+        fecha,
+        pedidos: resumen[0].pedidos,
+        total: Number(resumen[0].total),
+        productos,
+      });
+    });
   });
 });
 

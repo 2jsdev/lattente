@@ -348,7 +348,7 @@ body.home-page .hero-content {
   position: relative;
   min-height: calc(100dvh - var(--header-height));
   color: var(--cream);
-  background: url("/images/hero-coffee-poster.jpg") center / cover no-repeat;
+  background: url("/multimedia/hero-coffee-poster.jpg") center / cover no-repeat;
   overflow: hidden;
 }
 
@@ -1776,6 +1776,34 @@ button.photo-gallery__nav:active {
 
 .orders-fields[hidden] {
   display: none;
+}
+
+/* Formulario o QR escondido (los dos usan .orders-panel, que tiene display: grid) */
+.orders-panel[hidden] {
+  display: none;
+}
+
+/* QR de pago que aparece después de enviar el pedido */
+.orders-qr {
+  justify-items: center;
+  text-align: center;
+}
+
+.orders-qr h3 {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 1.7rem;
+}
+
+.orders-qr p {
+  margin: 0;
+}
+
+.orders-qr img {
+  width: min(100%, 240px);
+  height: auto;
+  border: 1px solid var(--line);
+  border-radius: 10px;
 }
 
 .orders-fields .field {

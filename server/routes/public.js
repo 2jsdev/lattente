@@ -98,10 +98,10 @@ routes.get('/products', (req, res) => {
 // CREAR UN PEDIDO (pedido + sus productos, en una transacción)
 // Igual que el préstamo de la clase: si algo falla, rollback y no se guarda nada.
 routes.post('/orders', (req, res) => {
-  const { email, address, quantity, notes, items } = req.body;
+  const { email, phone, address, quantity, notes, items } = req.body;
 
-  if (!email || !address) {
-    return res.status(400).json({ error: 'Debes ingresar email y dirección' });
+  if (!email || !phone || !address) {
+    return res.status(400).json({ error: 'Debes ingresar email, celular y dirección' });
   }
   if (!Array.isArray(items) || items.length === 0) {
     return res.status(400).json({ error: 'Selecciona al menos un producto' });
@@ -130,8 +130,8 @@ routes.post('/orders', (req, res) => {
       }
 
       // 1) Registrar el pedido
-      const pedidoQuery = 'INSERT INTO orders (email, address, quantity, notes) VALUES (?, ?, ?, ?)';
-      conn.query(pedidoQuery, [email, address, quantity || 1, notes || null], (err, resultado) => {
+      const pedidoQuery = 'INSERT INTO orders (email, phone, address, quantity, notes) VALUES (?, ?, ?, ?, ?)';
+      conn.query(pedidoQuery, [email, phone, address, quantity || 1, notes || null], (err, resultado) => {
         if (err) return cancelar('Error al registrar el pedido', err);
         const idPedido = resultado.insertId;
 

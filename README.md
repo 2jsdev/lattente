@@ -156,7 +156,7 @@ Abrir **<http://localhost:3030/admin>** y escribir la contraseña
   (constante `ADMIN_PASSWORD`).
 - La sesión se guarda en la memoria del servidor: si lo reinicias (o
   `npm run dev` lo reinicia al guardar), hay que volver a iniciar sesión.
-- Las fotos que se suben desde el admin quedan en `public/uploads/`
+- Las fotos que se suben desde el admin quedan en `public/multimedia/uploads/`
   **solo en tu computadora** (esa carpeta no se sube a Git).
 
 ---
@@ -192,12 +192,12 @@ Abrir **<http://localhost:3030/admin>** y escribir la contraseña
 lattente/
 ├── db/
 │   └── lattente.sql        ← tablas + datos (importar en HeidiSQL)
-├── public/
+├── public/                 ← TODO el código del navegador (HTML, CSS y JS)
 │   ├── index.html          ← página pública (menú, pedido, feedback)
 │   ├── admin.html          ← panel de administración
 │   ├── css/                ← estilos
-│   ├── images/, videos/    ← logo, portada, etc.
-│   ├── uploads/            ← fotos que se suben desde el admin
+│   ├── multimedia/         ← imágenes y videos (logo, portada…)
+│   │   └── uploads/        ← fotos que se suben desde el admin
 │   └── js/
 │       ├── utils.js        ← escapeHtml(), urlSegura() y api() (fetch); lo usan todos
 │       ├── cart.js         ← carrito guardado en el navegador (localStorage)
@@ -226,14 +226,39 @@ Todo está escrito directamente en el código (no hay archivo `.env`):
 | Usuario de MySQL | `root` | `server/conexion.js` |
 | Contraseña de MySQL | *(vacía)* | `server/conexion.js` |
 | Nombre de la base | `lattente` | `server/conexion.js` |
-| Contraseña del admin | `lattente-admin` | `ADMIN_PASSWORD` en `server/routes/admin.js` |
+| Contraseña del admin | `ravasco` | `ADMIN_PASSWORD` en `server/routes/admin.js` |
 
 ## Páginas
 
 | Ruta | Contenido |
 | --- | --- |
 | `/` | Portada, menú, pedido (`#orders`) y feedback (`#feedback`) |
-| `/admin` | Panel para administrar productos, categorías, pedidos y feedback |
+| `/admin` | Panel para administrar productos, categorías, pedidos, reporte del día y feedback |
+
+## Pedidos: WhatsApp, QR de pago y reporte
+
+- **QR de pago:** al enviar un pedido, el cliente ve su número de pedido, el
+  total y la imagen [`public/multimedia/qr-pago.png`](public/multimedia/qr-pago.png).
+  Para poner el QR real de la cafetería, **reemplaza ese archivo** con el
+  mismo nombre.
+- **Avisar por WhatsApp:** el pedido pide el celular del cliente. En el
+  admin (pestaña *Pedidos*) cada pedido tiene el botón **Avisar por
+  WhatsApp**, que abre WhatsApp con el mensaje ya escrito; solo hay que
+  apretar *Enviar*. El mensaje y el código de país (`591`) se cambian en
+  `linkWhatsApp()` y `CODIGO_PAIS`, al inicio de
+  [`public/js/admin.js`](public/js/admin.js).
+- **Reporte del día:** pestaña *Reporte del día* del admin. Muestra
+  cuántos pedidos hubo, cuánto se vendió y qué productos se vendieron en el
+  día elegido. Los pedidos cancelados no se cuentan.
+
+> **¿Ya tenías la base cargada de antes?** Le falta la columna `phone`.
+> Vuelve a importar `db/lattente.sql` (borra todo) **o**, para no perder
+> datos, ejecuta esto en HeidiSQL:
+>
+> ```sql
+> USE lattente;
+> ALTER TABLE orders ADD COLUMN phone VARCHAR(20) NOT NULL DEFAULT '' AFTER email;
+> ```
 
 ## Tablas
 
@@ -241,7 +266,7 @@ Todo está escrito directamente en el código (no hay archivo `.env`):
 | --- | --- |
 | `categories` | Secciones del menú |
 | `products` | Productos (precio, fotos, destacado, activo) |
-| `orders` | Pedidos de los clientes |
+| `orders` | Pedidos de los clientes (email, celular, dirección, estado) |
 | `order_items` | Productos de cada pedido |
 | `feedback` | Calificaciones (1 a 5) y comentarios |
 | `redes` | Links de redes sociales (una sola fila) |
@@ -260,8 +285,48 @@ Todo está escrito directamente en el código (no hay archivo `.env`):
 | GET/POST/PUT/DELETE | `/api/admin/products` | CRUD de productos |
 | GET/POST/PUT/DELETE | `/api/admin/categories` | CRUD de categorías |
 | GET / PATCH | `/api/admin/orders` | Ver pedidos / cambiar estado |
+| GET | `/api/admin/report?fecha=AAAA-MM-DD` | Reporte del día: pedidos, total vendido y productos |
 | GET | `/api/admin/feedback` | Ver feedback |
 | PUT | `/api/admin/redes` | Cambiar redes sociales |
 
 Para probar la API sin el navegador, abre por ejemplo
 <http://localhost:3030/api/categories>: debe mostrar la lista en JSON.
+
+---
+
+## Material de apoyo (para el equipo)
+
+En la carpeta [`docs/`](docs/) hay material para entender el proyecto:
+
+| Archivo | Qué es |
+| --- | --- |
+| [`docs/GUIA-PARA-ALUMNOS.md`](docs/GUIA-PARA-ALUMNOS.md) | Guía escrita: qué son las funciones, cómo están hechas las rutas, cómo está organizado el JS del navegador |
+| [`docs/GUIA-PARA-ALUMNOS.pdf`](docs/GUIA-PARA-ALUMNOS.pdf) | La misma guía en PDF (20 páginas), lista para compartir o imprimir |
+| [`docs/guion-audio.md`](docs/guion-audio.md) | Guion del audio explicativo, dividido en 7 partes |
+| [`docs/audio/`](docs/audio/) | El audio generado (MP3 y M4A), listo para compartir |
+| [`docs/generar-audio.sh`](docs/generar-audio.sh) | Script que regenera el audio desde el guion |
+| [`docs/make-pdf.py`](docs/make-pdf.py) | Convierte cualquier Markdown de `docs/` a PDF |
+
+**Para cambiar la contraseña del admin**, edita `ADMIN_PASSWORD` en
+[`server/routes/admin.js`](server/routes/admin.js) y reinicia el servidor.
+Detalle completo en la
+[guia](docs/GUIA-PARA-ALUMNOS.md#5-la-contraseña-del-admin-cómo-se-cambia).
+
+**Para regenerar el PDF:**
+
+```bash
+pip install markdown pygments
+python3 docs/make-pdf.py docs/GUIA-PARA-ALUMNOS.md docs/GUIA-PARA-ALUMNOS.pdf
+```
+
+**Para regenerar el audio** (en macOS, con la voz nativa en español):
+
+```bash
+bash docs/generar-audio.sh
+```
+
+Se puede cambiar la voz y la velocidad:
+
+```bash
+VOZ="Mónica" VELOCIDAD=160 bash docs/generar-audio.sh
+```
