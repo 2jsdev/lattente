@@ -157,6 +157,9 @@ async function enviarPedido(evento) {
     return;
   }
 
+  // Sin cuenta no se puede pedir: se abre el registro (usuarios.js)
+  if (!exigirUsuario("Para hacer tu pedido necesitas una cuenta.")) return;
+
   const items = cart.map((item) => ({
     productId: Number(item.id),
     name: item.name,
@@ -164,9 +167,8 @@ async function enviarPedido(evento) {
     quantity: Number(item.quantity) || 1,
   }));
 
+  // El correo y el celular no se mandan: el servidor los toma de la cuenta
   const pedido = {
-    email: form.elements.email.value.trim(),
-    phone: form.elements.phone.value.trim(),
     address: form.elements.address.value.trim(),
     quantity: cartCount(cart),
     notes: "",
@@ -182,6 +184,8 @@ async function enviarPedido(evento) {
     mostrarQrDePago(respuesta.order.id, total);
   } catch (error) {
     showToast(error.message, "error");
+    pintarBotonUsuario(); // por si la sesión venció
+    mostrarDatosDelPedido();
   } finally {
     submit.disabled = false;
     renderOrderProducts();

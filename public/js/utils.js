@@ -24,13 +24,33 @@ function urlSegura(valor) {
   }
 }
 
-// Hace un fetch a la API y devuelve el JSON; si el server responde error, lanza el mensaje
+// ---------- SESIÓN DEL USUARIO ----------
+// Al registrarse o ingresar, el navegador guarda { token, usuario } en localStorage
+const SESION_KEY = "lattente_sesion";
+
+function leerSesion() {
+  try {
+    return JSON.parse(localStorage.getItem(SESION_KEY));
+  } catch {
+    return null;
+  }
+}
+
+// Hace un fetch a la API y devuelve el JSON; si el server responde error, lanza el mensaje.
+// Si hay sesión, manda el token para que el servidor sepa quién es.
 async function api(ruta, opciones = {}) {
+  const sesion = leerSesion();
+  const headers = { "Content-Type": "application/json" };
+  if (sesion) headers.Authorization = "Bearer " + sesion.token;
+
   const pedido = await fetch(ruta, {
     method: opciones.method || "GET",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: opciones.body,
   });
+
+  // 401 = el servidor no reconoce la sesión: se borra para que vuelva a ingresar
+  if (pedido.status === 401) localStorage.removeItem(SESION_KEY);
 
   let resultado = {};
   try {

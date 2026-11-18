@@ -207,8 +207,9 @@
           <button type="button" class="btn secondary" id="refresh-feedback-btn">Actualizar</button>
         </div>
         <p class="panel-hint">
-          Calificaciones y comentarios que dejan los clientes en la página de
-          Feedback.
+          Calificaciones y comentarios que dejan los clientes registrados. Los
+          comentarios se muestran en la página; con <strong>Borrar</strong> se
+          quitan de la página y de la base.
         </p>
         <div class="table-tools">
           <label class="table-search">
@@ -222,10 +223,11 @@
           <table>
             <thead>
               <tr>
-                <th><button class="sort-button" type="button" data-sort-column="0">Email</button></th>
+                <th><button class="sort-button" type="button" data-sort-column="0">Cliente</button></th>
                 <th><button class="sort-button" type="button" data-sort-column="1" data-sort-type="number">Calificación</button></th>
                 <th><button class="sort-button" type="button" data-sort-column="2">Comentario</button></th>
                 <th><button class="sort-button" type="button" data-sort-column="3" data-sort-type="date">Fecha</button></th>
+                <th></th>
               </tr>
             </thead>
             <tbody id="feedback-tbody" data-table-body="feedback"></tbody>

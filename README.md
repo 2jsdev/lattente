@@ -69,7 +69,7 @@ descomprimirlo y mover la carpeta a `C:\laragon\www\lattente`.
 ## 4. Cargar la base de datos
 
 El archivo [`db/lattente.sql`](db/lattente.sql) crea la base `lattente`, sus
-6 tablas y el menú de ejemplo (16 categorías y 32 productos).
+7 tablas y el menú de ejemplo (16 categorías y 32 productos).
 
 > ⚠️ **El script borra y vuelve a crear la base `lattente`.** Si ya la tenías,
 > se pierden los pedidos, el feedback y los cambios hechos desde el admin.
@@ -200,12 +200,13 @@ lattente/
 │   │   └── uploads/        ← fotos que se suben desde el admin
 │   └── js/
 │       ├── utils.js        ← escapeHtml(), urlSegura() y api() (fetch); lo usan todos
+│       ├── usuarios.js     ← registro, ingreso y cierre de sesión de los clientes
 │       ├── cart.js         ← carrito guardado en el navegador (localStorage)
 │       ├── app.js          ← avisos, carrito lateral, navegación, video de portada
 │       ├── product-media.js← fotos de productos y galería con zoom
 │       ├── menu.js         ← categorías, productos y buscador
 │       ├── orders.js       ← catálogo y envío del pedido
-│       ├── feedback.js     ← envío de calificaciones
+│       ├── feedback.js     ← envío de calificaciones y comentarios visibles
 │       ├── site-footer.js  ← redes sociales del pie de página
 │       └── admin.js        ← todo el panel de administración
 └── server/
@@ -241,7 +242,7 @@ Todo está escrito directamente en el código (no hay archivo `.env`):
   total y la imagen [`public/multimedia/qr-pago.png`](public/multimedia/qr-pago.png).
   Para poner el QR real de la cafetería, **reemplaza ese archivo** con el
   mismo nombre.
-- **Avisar por WhatsApp:** el pedido pide el celular del cliente. En el
+- **Avisar por WhatsApp:** el celular sale de la cuenta del cliente (se pide al registrarse). En el
   admin (pestaña *Pedidos*) cada pedido tiene el botón **Avisar por
   WhatsApp**, que abre WhatsApp con el mensaje ya escrito; solo hay que
   apretar *Enviar*. El mensaje y el código de país (`591`) se cambian en
@@ -251,14 +252,26 @@ Todo está escrito directamente en el código (no hay archivo `.env`):
   cuántos pedidos hubo, cuánto se vendió y qué productos se vendieron en el
   día elegido. Los pedidos cancelados no se cuentan.
 
-> **¿Ya tenías la base cargada de antes?** Le falta la columna `phone`.
-> Vuelve a importar `db/lattente.sql` (borra todo) **o**, para no perder
-> datos, ejecuta esto en HeidiSQL:
->
-> ```sql
-> USE lattente;
-> ALTER TABLE orders ADD COLUMN phone VARCHAR(20) NOT NULL DEFAULT '' AFTER email;
-> ```
+## Usuarios y comentarios
+
+- **Registro obligatorio:** para **hacer un pedido** o **dejar una reseña**
+  hay que tener cuenta. Si el cliente no ingresó, al apretar *Enviar* se abre
+  la ventana de registro. También puede registrarse o ingresar con el botón
+  **Registrarse** de la cabecera (que después cambia a **Salir**).
+- **El pedido solo pide la dirección.** El correo y el celular (para el aviso
+  por WhatsApp) se toman de la cuenta: el servidor los saca de `req.usuario`.
+- Las contraseñas se guardan **encriptadas** (con `crypto.scryptSync` de
+  Node), nunca como texto.
+- Al ingresar, el servidor crea un **token** que se guarda en la tabla `users`
+  y en el navegador (`localStorage`). Cada pedido o reseña manda ese token.
+- **Comentarios en la página:** los comentarios aparecen en la sección *Lo que
+  dicen nuestros clientes*, con el nombre, las estrellas y la fecha.
+- **Borrar comentarios:** en el admin, pestaña *Feedback*, cada comentario
+  tiene el botón **Borrar**; también desaparece de la página.
+
+> **¿Ya tenías la base cargada de antes?** Hay que volver a importar
+> `db/lattente.sql` (borra todo) para tener la tabla `users`, el celular de
+> los pedidos y el `user_id` de pedidos y reseñas.
 
 ## Tablas
 
@@ -266,9 +279,10 @@ Todo está escrito directamente en el código (no hay archivo `.env`):
 | --- | --- |
 | `categories` | Secciones del menú |
 | `products` | Productos (precio, fotos, destacado, activo) |
-| `orders` | Pedidos de los clientes (email, celular, dirección, estado) |
+| `users` | Clientes registrados (nombre, correo, celular, contraseña encriptada, token) |
+| `orders` | Pedidos de los clientes (usuario, email, celular, dirección, estado) |
 | `order_items` | Productos de cada pedido |
-| `feedback` | Calificaciones (1 a 5) y comentarios |
+| `feedback` | Calificaciones (1 a 5) y comentarios de cada usuario |
 | `redes` | Links de redes sociales (una sola fila) |
 
 ## API
@@ -278,15 +292,18 @@ Todo está escrito directamente en el código (no hay archivo `.env`):
 | GET | `/api/categories` | Lista de categorías (`?home=true`, `?group=frias`) |
 | GET | `/api/categories/:slug` | Una categoría con sus productos |
 | GET | `/api/products` | Productos activos (`?featured=true`, `?category=slug`) |
-| POST | `/api/orders` | Crear un pedido |
-| POST | `/api/feedback` | Enviar una calificación |
+| POST | `/api/orders` | Crear un pedido (**requiere cuenta**) |
+| POST | `/api/register` | Registrarse (devuelve el token) |
+| POST | `/api/login` | Ingresar (devuelve un token nuevo) |
+| GET | `/api/feedback` | Últimos comentarios para mostrar en la página |
+| POST | `/api/feedback` | Enviar una calificación (**requiere cuenta**) |
 | GET | `/api/redes` | Links de redes sociales (footer y admin) |
 | POST | `/api/admin/login` | Iniciar sesión del admin |
 | GET/POST/PUT/DELETE | `/api/admin/products` | CRUD de productos |
 | GET/POST/PUT/DELETE | `/api/admin/categories` | CRUD de categorías |
 | GET / PATCH | `/api/admin/orders` | Ver pedidos / cambiar estado |
 | GET | `/api/admin/report?fecha=AAAA-MM-DD` | Reporte del día: pedidos, total vendido y productos |
-| GET | `/api/admin/feedback` | Ver feedback |
+| GET / DELETE | `/api/admin/feedback` | Ver feedback / borrar un comentario (`/:id`) |
 | PUT | `/api/admin/redes` | Cambiar redes sociales |
 
 Para probar la API sin el navegador, abre por ejemplo

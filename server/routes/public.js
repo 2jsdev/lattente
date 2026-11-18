@@ -1,8 +1,105 @@
-// Rutas públicas: menú, productos, pedidos y feedback
+// Rutas públicas: menú, productos, usuarios, pedidos y feedback
 const express = require('express');
+const crypto = require('crypto');
 const pool = require('../conexion');
 
 const routes = express.Router();
+
+// ---------- USUARIOS: contraseñas y sesión ----------
+// La contraseña nunca se guarda tal cual: se guarda "sal:hash".
+// La sal es un texto al azar; el hash se calcula con scrypt (viene con Node).
+function encriptar(password) {
+  const sal = crypto.randomBytes(16).toString('hex');
+  const hash = crypto.scryptSync(password, sal, 64).toString('hex');
+  return sal + ':' + hash;
+}
+
+// Calcula el hash de nuevo con la misma sal y compara
+function passwordCorrecta(password, guardada) {
+  const [sal, hash] = guardada.split(':');
+  return crypto.scryptSync(password, sal, 64).toString('hex') === hash;
+}
+
+// "Guardia": deja pasar solo si el navegador manda un token de un usuario registrado.
+// Se usa en las rutas de pedidos y feedback.
+function requiereUsuario(req, res, next) {
+  const token = (req.headers.authorization || '').replace('Bearer ', '');
+  if (!token) {
+    return res.status(401).json({ error: 'Debes registrarte o ingresar para continuar' });
+  }
+
+  pool.query('SELECT id, name, email, phone FROM users WHERE token = ?', [token], (err, rows) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Error al verificar la sesión' });
+    }
+    if (rows.length === 0) {
+      return res.status(401).json({ error: 'Tu sesión venció, vuelve a ingresar' });
+    }
+    req.usuario = rows[0]; // la ruta siguiente sabe quién es
+    next();
+  });
+}
+
+// Devuelve los datos del usuario (sin la contraseña) junto con su token nuevo
+function respuestaDeSesion(usuario, token) {
+  return { token, usuario: { name: usuario.name, email: usuario.email, phone: usuario.phone } };
+}
+
+// REGISTRARSE
+routes.post('/register', (req, res) => {
+  const { name, email, phone, password } = req.body;
+
+  if (!name || !email || !phone || !password) {
+    return res.status(400).json({ error: 'Completa nombre, correo, celular y contraseña' });
+  }
+  if (password.length < 6) {
+    return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres' });
+  }
+
+  const token = crypto.randomBytes(24).toString('hex');
+  const query = 'INSERT INTO users (name, email, phone, password, token) VALUES (?, ?, ?, ?, ?)';
+
+  pool.query(query, [name, email, phone, encriptar(password), token], (err) => {
+    if (err && err.code === 'ER_DUP_ENTRY') {
+      return res.status(400).json({ error: 'Ese correo ya está registrado, ingresa con tu contraseña' });
+    }
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Error al registrar el usuario' });
+    }
+    res.status(201).json(respuestaDeSesion({ name, email, phone }, token));
+  });
+});
+
+// INGRESAR (iniciar sesión)
+routes.post('/login', (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Ingresa tu correo y tu contraseña' });
+  }
+
+  pool.query('SELECT * FROM users WHERE email = ?', [email], (err, rows) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Error al ingresar' });
+    }
+    if (rows.length === 0 || !passwordCorrecta(password, rows[0].password)) {
+      return res.status(401).json({ error: 'Correo o contraseña incorrectos' });
+    }
+
+    // Cada vez que ingresa se crea un token nuevo y se guarda en su fila
+    const usuario = rows[0];
+    const token = crypto.randomBytes(24).toString('hex');
+    pool.query('UPDATE users SET token = ? WHERE id = ?', [token, usuario.id], (err) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ error: 'Error al ingresar' });
+      }
+      res.json(respuestaDeSesion(usuario, token));
+    });
+  });
+});
 
 // images se guarda como texto JSON en MySQL -> lo convertimos a lista
 function arreglarFotos(producto) {
@@ -97,11 +194,13 @@ routes.get('/products', (req, res) => {
 
 // CREAR UN PEDIDO (pedido + sus productos, en una transacción)
 // Igual que el préstamo de la clase: si algo falla, rollback y no se guarda nada.
-routes.post('/orders', (req, res) => {
-  const { email, phone, address, quantity, notes, items } = req.body;
+routes.post('/orders', requiereUsuario, (req, res) => {
+  const { address, quantity, notes, items } = req.body;
+  // El correo y el celular salen de la cuenta del usuario (los puso al registrarse)
+  const { email, phone } = req.usuario;
 
-  if (!email || !phone || !address) {
-    return res.status(400).json({ error: 'Debes ingresar email, celular y dirección' });
+  if (!address) {
+    return res.status(400).json({ error: 'Debes ingresar la dirección de entrega' });
   }
   if (!Array.isArray(items) || items.length === 0) {
     return res.status(400).json({ error: 'Selecciona al menos un producto' });
@@ -130,8 +229,9 @@ routes.post('/orders', (req, res) => {
       }
 
       // 1) Registrar el pedido
-      const pedidoQuery = 'INSERT INTO orders (email, phone, address, quantity, notes) VALUES (?, ?, ?, ?, ?)';
-      conn.query(pedidoQuery, [email, phone, address, quantity || 1, notes || null], (err, resultado) => {
+      const pedidoQuery =
+        'INSERT INTO orders (user_id, email, phone, address, quantity, notes) VALUES (?, ?, ?, ?, ?, ?)';
+      conn.query(pedidoQuery, [req.usuario.id, email, phone, address, quantity || 1, notes || null], (err, resultado) => {
         if (err) return cancelar('Error al registrar el pedido', err);
         const idPedido = resultado.insertId;
 
@@ -167,18 +267,37 @@ routes.post('/orders', (req, res) => {
   });
 });
 
-// ENVIAR FEEDBACK
-routes.post('/feedback', (req, res) => {
-  const { email, rating, comment } = req.body;
+// VER COMENTARIOS (los que se muestran en la página, con el nombre de quien opinó)
+routes.get('/feedback', (req, res) => {
+  const query = `
+    SELECT f.id, f.rating, f.comment, f.created_at, u.name
+    FROM feedback f
+    LEFT JOIN users u ON u.id = f.user_id
+    WHERE f.comment IS NOT NULL AND f.comment <> ''
+    ORDER BY f.created_at DESC
+    LIMIT 12`;
+
+  pool.query(query, (err, rows) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Error al obtener los comentarios' });
+    }
+    res.json(rows);
+  });
+});
+
+// ENVIAR FEEDBACK (solo usuarios registrados; el correo sale de su cuenta)
+routes.post('/feedback', requiereUsuario, (req, res) => {
+  const { rating, comment } = req.body;
   const nota = Number(rating);
 
-  if (!email || !(nota >= 1 && nota <= 5)) {
-    return res.status(400).json({ error: 'Debes ingresar email y una calificación de 1 a 5' });
+  if (!(nota >= 1 && nota <= 5)) {
+    return res.status(400).json({ error: 'Elige una calificación de 1 a 5' });
   }
 
   pool.query(
-    'INSERT INTO feedback (email, rating, comment) VALUES (?, ?, ?)',
-    [email, nota, comment || null],
+    'INSERT INTO feedback (user_id, email, rating, comment) VALUES (?, ?, ?, ?)',
+    [req.usuario.id, req.usuario.email, nota, comment || null],
     (err, resultado) => {
       if (err) {
         console.error(err);

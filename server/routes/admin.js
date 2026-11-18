@@ -330,12 +330,32 @@ routes.get('/report', (req, res) => {
 
 // ================= FEEDBACK =================
 routes.get('/feedback', (req, res) => {
-  pool.query('SELECT * FROM feedback ORDER BY created_at DESC LIMIT 100', (err, rows) => {
+  const query = `
+    SELECT f.*, u.name
+    FROM feedback f
+    LEFT JOIN users u ON u.id = f.user_id
+    ORDER BY f.created_at DESC
+    LIMIT 100`;
+  pool.query(query, (err, rows) => {
     if (err) {
       console.error(err);
       return res.status(500).json({ error: 'Error al obtener el feedback' });
     }
     res.json(rows);
+  });
+});
+
+// BORRAR UN COMENTARIO
+routes.delete('/feedback/:id', (req, res) => {
+  pool.query('DELETE FROM feedback WHERE id = ?', [req.params.id], (err, resultado) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Error al borrar el comentario' });
+    }
+    if (resultado.affectedRows === 0) {
+      return res.status(404).json({ error: 'Comentario no encontrado' });
+    }
+    res.json({ ok: true });
   });
 });
 

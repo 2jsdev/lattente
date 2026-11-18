@@ -34,16 +34,29 @@ CREATE TABLE products (
   FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE
 );
 
+-- Usuarios (clientes registrados). Para pedir o dejar una reseña hay que registrarse.
+CREATE TABLE users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  email VARCHAR(150) NOT NULL UNIQUE,
+  phone VARCHAR(20) NOT NULL DEFAULT '',
+  password VARCHAR(200) NOT NULL,          -- la contraseña encriptada, nunca el texto
+  token VARCHAR(64),                       -- la sesión abierta del usuario
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Pedidos
 CREATE TABLE orders (
   id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT,                             -- quién hizo el pedido
   email VARCHAR(150) NOT NULL,
   phone VARCHAR(20) NOT NULL DEFAULT '',   -- celular para avisar por WhatsApp
   address VARCHAR(255) NOT NULL,
   quantity INT NOT NULL DEFAULT 1,
   notes TEXT,
   status VARCHAR(20) NOT NULL DEFAULT 'pending',
-  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
 -- Detalle de cada pedido
@@ -61,10 +74,12 @@ CREATE TABLE order_items (
 -- Calificaciones de clientes
 CREATE TABLE feedback (
   id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT,                             -- quién dejó la reseña
   email VARCHAR(150) NOT NULL,
   rating INT NOT NULL,
   comment TEXT,
-  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
 -- Redes sociales del pie de página (una sola fila, id = 1)

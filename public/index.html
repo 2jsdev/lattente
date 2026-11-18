@@ -28,6 +28,8 @@
         <a href="#menu" data-nav="menu">Menú</a>
         <a href="#orders" data-nav="orders">Pedido</a>
         <a href="#feedback" data-nav="feedback">Feedback</a>
+        <!-- Dice "Registrarse" o "Salir (nombre)" (lo cambia usuarios.js) -->
+        <button type="button" class="header-user" data-user-button>Registrarse</button>
       </nav>
       <form class="hero-search" data-search role="search">
         <label class="hero-search__field">
@@ -183,30 +185,8 @@
 
             <section class="orders-fields" aria-labelledby="delivery-title" hidden>
               <h4 id="delivery-title">Datos de entrega</h4>
-              <div class="field">
-                <label for="order-email">Correo electrónico</label>
-                <input
-                  id="order-email"
-                  name="email"
-                  type="email"
-                  required
-                  autocomplete="email"
-                  placeholder="tu@correo.com"
-                />
-              </div>
-              <div class="field">
-                <label for="order-phone">Celular (WhatsApp)</label>
-                <input
-                  id="order-phone"
-                  name="phone"
-                  type="tel"
-                  required
-                  autocomplete="tel"
-                  inputmode="numeric"
-                  pattern="[0-9 ]{8,15}"
-                  placeholder="70000000"
-                />
-              </div>
+              <!-- El correo y el celular salen de la cuenta; usuarios.js muestra aquí a nombre de quién va -->
+              <p class="orders-user" data-order-user hidden></p>
               <div class="field">
                 <label for="order-address">Dirección de entrega</label>
                 <input
@@ -260,19 +240,6 @@
           </header>
 
           <div class="field">
-            <label for="feedback-email">Correo electrónico</label>
-            <input
-              id="feedback-email"
-              name="email"
-              type="email"
-              required
-              autocomplete="email"
-              inputmode="email"
-              placeholder="tu@correo.com"
-            />
-          </div>
-
-          <div class="field">
             <label id="rating-label">¿Cómo estuvo el servicio?</label>
             <div class="feedback-faces" role="radiogroup" aria-labelledby="rating-label">
               <label title="Muy mal" aria-label="Muy mal">
@@ -315,10 +282,61 @@
           </div>
 
           <button class="btn" type="submit">Enviar calificación</button>
-          <p class="panel-note">Tu correo solo se usa para dar seguimiento a tu comentario.</p>
+          <p class="panel-note">Tu nombre aparecerá junto a tu comentario.</p>
         </form>
       </section>
     </div>
+
+    <!-- Comentarios de los clientes (los llena feedback.js con GET /api/feedback) -->
+    <section class="reviews" aria-labelledby="reviews-title">
+      <h2 id="reviews-title">Lo que dicen nuestros clientes</h2>
+      <div class="reviews-list" data-reviews></div>
+      <p class="reviews-empty" data-reviews-empty hidden>Todavía no hay comentarios. ¡Sé el primero!</p>
+    </section>
+
+    <!-- Ventana de registro / ingreso (la abre usuarios.js) -->
+    <dialog class="auth-dialog" data-auth-dialog>
+      <div class="panel auth-panel">
+        <button type="button" class="auth-close" data-auth-close aria-label="Cerrar">×</button>
+        <p class="auth-reason" data-auth-reason></p>
+
+        <form data-register-form>
+          <h3>Crear cuenta</h3>
+          <div class="field">
+            <label for="reg-name">Nombre</label>
+            <input id="reg-name" name="name" required autocomplete="name" placeholder="Tu nombre" />
+          </div>
+          <div class="field">
+            <label for="reg-email">Correo electrónico</label>
+            <input id="reg-email" name="email" type="email" required autocomplete="email" placeholder="tu@correo.com" />
+          </div>
+          <div class="field">
+            <label for="reg-phone">Celular (WhatsApp)</label>
+            <input id="reg-phone" name="phone" type="tel" required inputmode="numeric" pattern="[0-9 ]{8,15}" autocomplete="tel" placeholder="70000000" />
+          </div>
+          <div class="field">
+            <label for="reg-password">Contraseña</label>
+            <input id="reg-password" name="password" type="password" required minlength="6" autocomplete="new-password" placeholder="Mínimo 6 caracteres" />
+          </div>
+          <button class="btn" type="submit">Registrarme</button>
+          <p class="auth-switch">¿Ya tienes cuenta? <button type="button" data-auth-show="login">Ingresar</button></p>
+        </form>
+
+        <form data-login-form hidden>
+          <h3>Ingresar</h3>
+          <div class="field">
+            <label for="login-email">Correo electrónico</label>
+            <input id="login-email" name="email" type="email" required autocomplete="email" placeholder="tu@correo.com" />
+          </div>
+          <div class="field">
+            <label for="login-password">Contraseña</label>
+            <input id="login-password" name="password" type="password" required autocomplete="current-password" />
+          </div>
+          <button class="btn" type="submit">Ingresar</button>
+          <p class="auth-switch">¿No tienes cuenta? <button type="button" data-auth-show="register">Registrarme</button></p>
+        </form>
+      </div>
+    </dialog>
 
     <div class="cart-drawer" data-cart-drawer>
       <div class="cart-backdrop"></div>
@@ -405,6 +423,7 @@
     </footer>
 
     <script src="/js/utils.js"></script>
+    <script src="/js/usuarios.js"></script>
     <script src="/js/cart.js"></script>
     <script src="/js/app.js"></script>
     <script src="/js/product-media.js"></script>

@@ -3154,3 +3154,159 @@ body.cart-open {
     font-size: 0.61rem;
   }
 }
+
+/* ——— Usuarios: botón de la cabecera ——— */
+.header-user {
+  border: 1px solid rgba(253, 248, 232, 0.45);
+  border-radius: 999px;
+  padding: 0.3rem 0.8rem;
+  background: transparent;
+  color: var(--cream);
+  font: inherit;
+  font-size: 0.82rem;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.header-user:hover {
+  background: rgba(253, 248, 232, 0.12);
+}
+
+/* ——— Ventana de registro / ingreso (<dialog>) ——— */
+.auth-dialog {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  width: min(92vw, 400px);
+}
+
+.auth-dialog::backdrop {
+  background: rgba(28, 16, 12, 0.6);
+}
+
+.auth-panel {
+  position: relative;
+  width: 100%;
+  background: var(--chocolate);
+}
+
+.auth-panel h3 {
+  margin: 0 0 1rem;
+  font-family: var(--serif);
+  font-size: 1.7rem;
+}
+
+.auth-reason {
+  margin: 0 2rem 0.75rem 0;
+  color: #f3c98b;
+  font-size: 0.92rem;
+}
+
+.auth-reason:empty {
+  display: none;
+}
+
+.auth-close {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.8rem;
+  border: 0;
+  background: none;
+  color: var(--cream);
+  font-size: 1.6rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.auth-switch {
+  margin: 0.9rem 0 0;
+  font-size: 0.88rem;
+  text-align: center;
+  color: rgba(253, 248, 232, 0.78);
+}
+
+.auth-switch button {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--cream);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.auth-panel form[hidden] {
+  display: none;
+}
+
+/* ——— Comentarios de los clientes ——— */
+.reviews {
+  padding: clamp(2rem, 5vw, 3.5rem) clamp(1rem, 4vw, 3rem);
+  background: var(--cream-soft);
+}
+
+.reviews h2 {
+  margin: 0 auto 1.5rem;
+  max-width: var(--max);
+  font-family: var(--serif);
+  font-size: clamp(1.7rem, 3vw, 2.4rem);
+  color: var(--chocolate);
+}
+
+.reviews-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: 1rem;
+  max-width: var(--max);
+  margin: 0 auto;
+}
+
+.review {
+  display: grid;
+  align-content: start;
+  gap: 0.5rem;
+  padding: 1.1rem 1.2rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--white);
+}
+
+.review p {
+  margin: 0;
+}
+
+.review__stars {
+  color: #b9812f;
+  letter-spacing: 0.1em;
+}
+
+.review__text {
+  color: var(--ink);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.review__author {
+  color: var(--chocolate-soft);
+  font-size: 0.85rem;
+}
+
+.reviews-empty {
+  max-width: var(--max);
+  margin: 0 auto;
+  color: var(--chocolate-soft);
+}
+
+/* Línea "A nombre de…" en los datos de entrega del pedido */
+.orders-user {
+  margin: 0 0 0.75rem;
+  color: var(--chocolate-soft);
+  font-size: 0.85rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.orders-user[hidden] {
+  display: none;
+}

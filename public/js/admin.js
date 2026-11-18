@@ -537,10 +537,18 @@ async function loadFeedback() {
   rows.forEach((f) => {
     els.feedbackTbody.innerHTML += `
       <tr>
-        <td>${escapeHtml(f.email || "—")}</td>
+        <td>
+          <strong>${escapeHtml(f.name || "—")}</strong>
+          <div class="muted">${escapeHtml(f.email || "")}</div>
+        </td>
         <td data-sort-value="${f.rating}">${f.rating}</td>
         <td>${escapeHtml(f.comment || "")}</td>
         <td class="muted" data-sort-value="${escapeHtml(f.created_at)}">${new Date(f.created_at).toLocaleString("es")}</td>
+        <td>
+          <div class="row-actions">
+            <button type="button" data-del-feedback="${f.id}">Borrar</button>
+          </div>
+        </td>
       </tr>`;
   });
   applyTableView("feedback");
@@ -866,6 +874,20 @@ els.categoriesTbody.addEventListener("click", async (e) => {
     } catch (error) {
       showToast(error.message, true);
     }
+  }
+});
+
+// Botón Borrar de la tabla de feedback: DELETE /api/admin/feedback/:id
+els.feedbackTbody.addEventListener("click", async (e) => {
+  const delBtn = e.target.closest("[data-del-feedback]");
+  if (!delBtn || !confirm("¿Borrar este comentario? También deja de verse en la página.")) return;
+
+  try {
+    await apiAdmin(`/feedback/${delBtn.dataset.delFeedback}`, { method: "DELETE" });
+    showToast("Comentario borrado");
+    await loadFeedback();
+  } catch (error) {
+    showToast(error.message, true);
   }
 });
 
